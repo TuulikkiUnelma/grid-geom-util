@@ -9,10 +9,12 @@ use std::iter::{self, FusedIterator};
 /// A generic axis-aligned rectangle.
 ///
 /// The range of values is **inclusive**, meaning that the point `(x2, y2)` is inside the rectangle's area.
-/// This means that for integer types of `T`, a rectangle of size 0 is impossible to create.
+/// This means that a rectangle with the area of 0 is impossible to create.
 ///
 /// If `x1` isn't greater than or equal to `x2`, or if `y1` isn't greater than or equal to `y2`,
 /// then using this rectangle's methods is undefined behaviour and may panic.
+///
+/// It's marked as `#[non_exhaustive]` to stop anyone from accidentally creating a malformed rectangle.
 #[derive(
     Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
 )]
@@ -21,6 +23,7 @@ use std::iter::{self, FusedIterator};
     into = "[T; 4]",
     from = "[T; 4]"
 )]
+#[non_exhaustive]
 pub struct Rect<T> {
     pub x1: T,
     pub y1: T,
@@ -147,17 +150,32 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
 
     /// Returns the width of the rectangle, which is `x2 - x1 + 1`.
     pub fn width(&self) -> T {
-        self.x2.clone() - self.x1.clone()
+        self.x2.clone() - self.x1.clone() + T::one()
     }
 
     /// Returns the height of the rectangle, which is `y2 - y1 + 1`.
     pub fn height(&self) -> T {
+        self.y2.clone() - self.y1.clone() + T::one()
+    }
+
+    /// Returns the difference of the x-coordinate of the rectangle, which is `x2 - x1`.
+    pub fn diff_x(&self) -> T {
+        self.x2.clone() - self.x1.clone()
+    }
+
+    /// Returns the difference of the y-coordinate of the rectangle, which is `y2 - y1`.
+    pub fn diff_y(&self) -> T {
         self.y2.clone() - self.y1.clone()
     }
 
     /// Returns `[width, height]`.
     pub fn dim(&self) -> [T; 2] {
         [self.width(), self.height()]
+    }
+
+    /// Returns `[diff_x, diff_y]`.
+    pub fn diff_dim(&self) -> [T; 2] {
+        [self.diff_x(), self.diff_y()]
     }
 
     /// Returns the pair of starting point and dimensions: `[[x1, y1], [width, height]]`.
@@ -180,6 +198,16 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         min(self.width(), self.height())
     }
 
+    /// Returns the greater of diff_x and diff_y.
+    pub fn max_diff(&self) -> T {
+        max(self.diff_x(), self.diff_y())
+    }
+
+    /// Returns the smaller of diff_x and diff_y.
+    pub fn min_diff(&self) -> T {
+        min(self.diff_x(), self.diff_y())
+    }
+
     /// Returns the area of the rectange, which is `width * height`.
     pub fn area(&self) -> T {
         self.width() * self.height()
@@ -187,16 +215,12 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
 
     /// Returns how square this rectangle is from `[0, 1]`.
     ///
-    /// Returns the ratio `min_dim / max_dim`, except when `max_dim` is zero and it returns 0.
+    /// Returns the ratio `min_dim / max_dim`
     pub fn squareness(&self) -> f32
     where
         T: AsPrimitive<f32>,
     {
-        if self.max_dim().as_() != 0.0 {
-            self.min_dim().as_() / self.max_dim().as_()
-        } else {
-            0.0
-        }
+        self.min_dim().as_() / self.max_dim().as_()
     }
 
     /// Returns the midpoint of the rectangle.
@@ -273,6 +297,9 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     ///
     /// If x or y range can't be evenly split into the given amount of colums or rows,
     /// then the last sub-rectangle will be of smaller size.
+    ///
+    /// If the given amount of colums or rows is greater than the rectangle's width or height respectively,
+    /// then only width or height amount of colums or rows are returned.
     ///
     /// The rectangles will be overlapping on their borders.
     /// For example if this rectangle goes from `x1 = 0` to `x2 = 10`, and you split it to 2 columns,
