@@ -54,6 +54,7 @@ impl fmt::Display for CardDir {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashSet;
 
     fn test_points(min: i32, max: i32) -> impl Iterator<Item = Point<i32>> {
         let mut x = min;
@@ -93,5 +94,118 @@ mod tests {
         assert_eq!(Point::new(-5, 1).cardinal(), CardDir::West);
         assert_eq!(Point::new(1, -5).cardinal(), CardDir::North);
         assert_eq!(Point::new(1, 5).cardinal(), CardDir::South);
+    }
+
+    #[test]
+    fn point_neighborhood() {
+        let f = Point::new;
+        let p = f(10, -15);
+
+        for (i, (n, m)) in p.neighbors_neumann().zip(p.neighbors_moore()).enumerate() {
+            // first 4 should be same
+            assert_eq!(n, m);
+            assert!(i <= 4);
+        }
+
+        let neumann: HashSet<Point<i32>> = vec![f(11, -15), f(10, -16), f(9, -15), f(10, -14)]
+            .into_iter()
+            .collect();
+
+        let diag: HashSet<Point<i32>> = vec![f(11, -16), f(9, -16), f(9, -14), f(11, -14)]
+            .into_iter()
+            .collect();
+        let moore: HashSet<Point<i32>> = diag.union(&neumann).copied().collect();
+
+        assert_eq!(neumann, p.neighbors_neumann().collect());
+        assert_eq!(moore, p.neighbors_moore().collect());
+    }
+
+    #[test]
+    fn line_lerp() {
+        let line = Line::new(5, -5, 15, -25);
+
+        let f = Point::new;
+        let g = |t: f32| line.lerp(t).map(|x| x as i32);
+
+        assert_eq!(f(5, -5), g(0.0));
+        assert_eq!(f(6, -7), g(0.1));
+        assert_eq!(f(7, -9), g(0.2));
+        assert_eq!(f(8, -11), g(0.3));
+        assert_eq!(f(9, -13), g(0.4));
+        assert_eq!(f(10, -15), g(0.5));
+        assert_eq!(f(11, -17), g(0.6));
+        assert_eq!(f(12, -19), g(0.7));
+        assert_eq!(f(13, -21), g(0.8));
+        assert_eq!(f(14, -23), g(0.9));
+        assert_eq!(f(15, -25), g(1.0));
+    }
+
+    #[test]
+    fn line_bresenham() {
+        let line = Line::new(5, -4, 7, -12);
+        let f = Point::new;
+
+        let points: HashSet<Point<i32>> = vec![
+            f(5, -4),
+            f(5, -5),
+            f(5, -6),
+            f(6, -7),
+            f(6, -8),
+            f(6, -9),
+            f(6, -10),
+            f(7, -11),
+            f(7, -12),
+        ]
+        .into_iter()
+        .collect();
+
+        assert_eq!(points, line.bresenham().collect());
+    }
+
+    #[test]
+    fn rect_new_check() {
+        let f = Point::new;
+
+        for (p, delta) in test_points(-50, 50).zip(
+            [
+                f(0, 0),
+                f(0, 2),
+                f(1, 1),
+                f(2, 1),
+                f(2, 2),
+                f(3, 3),
+                f(4, 5),
+            ]
+            .iter()
+            .cycle(),
+        ) {
+            let (x1, y1, x2, y2) = (p.x, p.y, p.x + delta.x, p.y + delta.y);
+            let (xm2, ym2) = (p.x - delta.x, p.y - delta.y);
+            unsafe {
+                // normal
+                assert_eq!(
+                    Rect::new(x1, y1, x2, y2),
+                    Rect::new_unchecked(x1, y1, x2, y2)
+                );
+
+                // x flipped
+                assert_eq!(
+                    Rect::new(x1, y1, xm2, y2),
+                    Rect::new_unchecked(xm2, y1, x1, y2)
+                );
+
+                // y flipped
+                assert_eq!(
+                    Rect::new(x1, y1, x2, ym2),
+                    Rect::new_unchecked(x1, ym2, x2, y1)
+                );
+
+                // both flipped
+                assert_eq!(
+                    Rect::new(x1, y1, xm2, ym2),
+                    Rect::new_unchecked(xm2, ym2, x1, y1)
+                );
+            }
+        }
     }
 }
