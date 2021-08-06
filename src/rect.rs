@@ -44,8 +44,10 @@ impl<T> Rect<T> {
 
     /// Creates a new rectangle without checking the validity of inputs.
     ///
-    /// Make sure that x2 and y2 are greater or equal to x1 and y2 respectively,
-    /// or the returned rectangle will be invalid.
+    /// # Safety
+    ///
+    /// Make sure that x2 and y2 are greater or equal to x1 and y2 respectively.
+    /// Otherwise the returned rectangle will be invalid and likely to cause panics or undefined behaviour when used.
     pub unsafe fn new_unchecked(x1: T, y1: T, x2: T, y2: T) -> Self {
         Self { x1, y1, x2, y2 }
     }
