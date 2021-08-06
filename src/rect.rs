@@ -1,0 +1,579 @@
+use crate::{max, min, Line, Point};
+
+use num_traits::{AsPrimitive, Num};
+use serde::{Deserialize, Serialize};
+
+use std::fmt;
+use std::iter::{self, FusedIterator};
+
+/// A generic axis-aligned rectangle.
+///
+/// The range of values is **inclusive**, meaning that the point `(x2, y2)` is inside the rectangle's area.
+/// This means that for integer types of `T`, a rectangle of size 0 is impossible to create.
+///
+/// If `x1` isn't greater than or equal to `x2`, or if `y1` isn't greater than or equal to `y2`,
+/// then using this rectangle's methods is undefined behaviour and may panic.
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
+#[serde(
+    bound(serialize = "T: Clone + Serialize"),
+    into = "[T; 4]",
+    from = "[T; 4]"
+)]
+pub struct Rect<T> {
+    pub x1: T,
+    pub y1: T,
+    pub x2: T,
+    pub y2: T,
+}
+
+impl<T> Rect<T> {
+    /// Creates a new rectangle.
+    ///
+    /// If x2 or y2 are greater than x1 or y1, it's flipped so that the resulting rectangle will be valid.
+    pub fn new(x1: T, y1: T, x2: T, y2: T) -> Self
+    where
+        T: PartialOrd,
+    {
+        Self::from_corners((x1, y1), (x2, y2))
+    }
+
+    /// Creates a new rectangle without checking the validity of inputs.
+    ///
+    /// Make sure that x2 and y2 are greater or equal to x1 and y2 respectively,
+    /// or the returned rectangle will be invalid.
+    pub unsafe fn new_unchecked(x1: T, y1: T, x2: T, y2: T) -> Self {
+        Self { x1, y1, x2, y2 }
+    }
+
+    /// Creates a rectangle between the given opposite cornerpoints.
+    pub fn from_corners<P>(a: P, b: P) -> Self
+    where
+        P: Into<Point<T>>,
+        T: PartialOrd,
+    {
+        let [a, b] = [a.into(), b.into()];
+        let [x1, x2] = if a.x < b.x { [a.x, b.x] } else { [b.x, a.x] };
+        let [y1, y2] = if a.y < b.y { [a.y, b.y] } else { [b.y, a.y] };
+        Self { x1, y1, x2, y2 }
+    }
+
+    /// Creates a rectangle using the beginning and endpoints of a line as opposite cornerpoints.
+    pub fn from_line(l: Line<T>) -> Self
+    where
+        T: PartialOrd,
+    {
+        Self::from_corners((l.x1, l.y1), (l.x2, l.y2))
+    }
+
+    /// Maps a function to all of the coordinates.
+    #[must_use]
+    pub fn map<F, U>(self, f: F) -> Rect<U>
+    where
+        F: Fn(T) -> U,
+    {
+        Rect {
+            x1: f(self.x1),
+            y1: f(self.y1),
+            x2: f(self.x2),
+            y2: f(self.y2),
+        }
+    }
+
+    /// Maps a function to both of the x coordinates.
+    #[must_use]
+    pub fn map_x<F>(self, f: F) -> Self
+    where
+        F: Fn(T) -> T,
+    {
+        Rect {
+            x1: f(self.x1),
+            y1: self.y1,
+            x2: f(self.x2),
+            y2: self.y2,
+        }
+    }
+
+    /// Maps a function to both of the y coordinates.
+    #[must_use]
+    pub fn map_y<F>(self, f: F) -> Self
+    where
+        F: Fn(T) -> T,
+    {
+        Rect {
+            x1: self.x1,
+            y1: f(self.y1),
+            x2: self.x2,
+            y2: f(self.y2),
+        }
+    }
+
+    /// Maps a function to the rectangle's corners.
+    ///
+    /// Will rearrange the coordinates to make it a valid rectangle if their order is changed by `f`.
+    #[must_use]
+    pub fn map_corners<F, U>(self, f: F) -> Rect<U>
+    where
+        F: Fn(Point<T>) -> Point<U>,
+        U: PartialOrd,
+    {
+        let (a, b) = self.into();
+        Rect::from_corners(f(a), f(b))
+    }
+}
+
+impl<T: Clone + Num + PartialOrd> Rect<T> {
+    /// Creates a new rectangle from the given minimum point and dimensions
+    pub fn from_dim<P: Into<Point<T>>>(min_point: P, dimensions: [T; 2]) -> Self {
+        let Point { x, y } = min_point.into();
+        let [w, h] = dimensions;
+        Self::new(x.clone(), y.clone(), x + w, y + h)
+    }
+
+    /// Creates a rectangle around the given centerpoint by using the given x and y extents / half-dimensions.
+    ///
+    /// The extents should be positive.
+    pub fn from_center<P: Into<Point<T>>>(center: P, extents: [T; 2]) -> Self {
+        let Point { x, y } = center.into();
+        let [xe, ye] = extents;
+        Self::new(
+            x.clone() - xe.clone(),
+            y.clone() - ye.clone(),
+            x + xe,
+            y + ye,
+        )
+    }
+
+    /// Returns the width of the rectangle, which is `x2 - x1 + 1`.
+    pub fn width(&self) -> T {
+        self.x2.clone() - self.x1.clone()
+    }
+
+    /// Returns the height of the rectangle, which is `y2 - y1 + 1`.
+    pub fn height(&self) -> T {
+        self.y2.clone() - self.y1.clone()
+    }
+
+    /// Returns `[width, height]`.
+    pub fn dim(&self) -> [T; 2] {
+        [self.width(), self.height()]
+    }
+
+    /// Returns the pair of starting point and dimensions: `[[x1, y1], [width, height]]`.
+    pub fn start_dim(&self) -> [[T; 2]; 2] {
+        [self.min_point().into(), self.dim()]
+    }
+
+    /// Returns `width + height`.
+    pub fn dim_sum(&self) -> T {
+        self.width() + self.height()
+    }
+
+    /// Returns the greater of width and height.
+    pub fn max_dim(&self) -> T {
+        max(self.width(), self.height())
+    }
+
+    /// Returns the smaller of width and height.
+    pub fn min_dim(&self) -> T {
+        min(self.width(), self.height())
+    }
+
+    /// Returns the area of the rectange, which is `width * height`.
+    pub fn area(&self) -> T {
+        self.width() * self.height()
+    }
+
+    /// Returns how square this rectangle is from `[0, 1]`.
+    ///
+    /// Returns the ratio `min_dim / max_dim`, except when `max_dim` is zero and it returns 0.
+    pub fn squareness(&self) -> f32
+    where
+        T: AsPrimitive<f32>,
+    {
+        if self.max_dim().as_() != 0.0 {
+            self.min_dim().as_() / self.max_dim().as_()
+        } else {
+            0.0
+        }
+    }
+
+    /// Returns the midpoint of the rectangle.
+    pub fn mid(&self) -> Point<T> {
+        let two = || T::one() + T::one();
+        let two = || Point::new(two(), two());
+        (self.min_point() + self.max_point()) / two()
+    }
+
+    /// Returns true if this rectangle fits within the given `larger` rectangle.
+    ///
+    /// Sharing borders (eg. both x1 values are the same) counts as being inside.
+    /// This means that using the same rectangle as both arguments will return true.
+    pub fn is_inside(&self, larger: &Self) -> bool {
+        self.corners().all(|p| p.is_inside(larger))
+    }
+
+    /// Returns a new rectangle that's the same shape but moved to fit inside the given `larger` rectangle.
+    ///
+    /// Returns `None` if this rectangle is wider or taller than the `larger` and therefore would not fit.
+    pub fn to_inside(&self, larger: &Self) -> Option<Self> {
+        if self.width() > larger.width() || self.height() > larger.height() {
+            return None;
+        }
+
+        let mut out = self.clone();
+
+        // move along x if needed
+        if self.x1 < larger.x1 {
+            out = out.map_x(|x| x + (larger.x1.clone() - self.x1.clone()));
+        } else if self.x2 > larger.x2 {
+            out = out.map_x(|x| x - (self.x2.clone() - larger.x2.clone()));
+        }
+
+        // move along y if needed
+        if self.y1 < larger.y1 {
+            out = out.map_y(|y| y + (larger.y1.clone() - self.y1.clone()));
+        } else if self.y2 > larger.y2 {
+            out = out.map_y(|y| y - (self.y2.clone() - larger.y2.clone()));
+        }
+
+        Some(out)
+    }
+
+    /// Returns true if this rectangle intersects the given rectangle.
+    pub fn does_intersect(&self, other: &Self) -> bool {
+        let [ax1, ay1, ax2, ay2]: [T; 4] = self.clone().into();
+        let [bx1, by1, bx2, by2]: [T; 4] = other.clone().into();
+        ax1 <= bx2 && ax2 >= bx1 && ay1 <= by2 && ay2 >= by1
+    }
+
+    /// Intersects this rectangle with another and returns the intersection if it exists.
+    pub fn intersect(&self, other: &Self) -> Option<Self> {
+        if self.does_intersect(other) {
+            let [ax1, ay1, ax2, ay2]: [T; 4] = self.clone().into();
+            let [bx1, by1, bx2, by2]: [T; 4] = other.clone().into();
+            Some(Self::new(
+                max(ax1, bx1),
+                max(ay1, by1),
+                min(ax2, bx2),
+                min(ay2, by2),
+            ))
+        } else {
+            None
+        }
+    }
+
+    /// Splits this rectangle to a group of several sub-rectangles.
+    ///
+    /// If either of `cols` or `rows` is a non-positive number, this will return an empty vector.
+    ///
+    /// The returned rectangles will be evenly split into the given colums and rows.
+    /// They are in order of increasing coordinates, with rows grouped together.
+    ///
+    /// If x or y range can't be evenly split into the given amount of colums or rows,
+    /// then the last sub-rectangle will be of smaller size.
+    ///
+    /// The rectangles will be overlapping on their borders.
+    /// For example if this rectangle goes from `x1 = 0` to `x2 = 10`, and you split it to 2 columns,
+    /// you will get rectangles that go from `x1 = 0` to `x2 = 5` and from `x1 = 5` to `x2 = 10`.
+    pub fn split(&self, cols: T, rows: T) -> Vec<Self>
+    where
+        T: AsPrimitive<usize>,
+    {
+        if cols <= T::zero() || rows <= T::zero() {
+            return Vec::new();
+        }
+
+        let mut out = Vec::with_capacity(cols.as_() * rows.as_());
+
+        let delta_x = self.width() / cols;
+        let delta_y = self.height() / cols;
+        let (mut cur_x, mut cur_y) = self.min_point().into();
+        let (mut old_x, mut old_y) = (cur_x, cur_y);
+
+        for _ in 0..rows.as_() {
+            cur_y = min(cur_y + delta_y, self.y2);
+            for _ in 0..cols.as_() {
+                cur_x = min(cur_x + delta_x, self.x2);
+                out.push(Rect::new(old_x, old_y, cur_x, cur_y));
+                old_x = cur_x
+            }
+            old_y = cur_y;
+        }
+
+        out
+    }
+
+    /// Splits this rectangle to 4 parts, using the given splitting point.
+    ///
+    /// Returns `None` if the splitting point is outside this rectangle.
+    ///
+    /// They are returned in the increasing order of coordinates, with the top row first.
+    pub fn split_quad(&self, splitting_point: Point<T>) -> Option<[Self; 4]> {
+        if !splitting_point.is_inside(self) {
+            return None;
+        }
+
+        let Rect { x1, y1, x2, y2 } = self.clone();
+        let (px, py) = splitting_point.into();
+        Some(unsafe {
+            [
+                Rect::new_unchecked(x1.clone(), y1.clone(), px.clone(), py.clone()),
+                Rect::new_unchecked(px.clone(), y1, x2.clone(), py.clone()),
+                Rect::new_unchecked(x1, py.clone(), px.clone(), y2.clone()),
+                Rect::new_unchecked(px, py, x2, y2),
+            ]
+        })
+    }
+
+    /// Horizontally splits this rectangle to 2 parts, using the given splitting line.
+    ///
+    /// Returns `None` if the splitting line is outside this rectangle.
+    ///
+    /// The one with smaller coordinates is returned first.
+    pub fn split_x(&self, split_x: T) -> Option<[Self; 2]> {
+        let Rect { x1, y1, x2, y2 } = self.clone();
+        let px = split_x;
+
+        if px < x1 || x2 < px {
+            return None;
+        }
+
+        Some(unsafe {
+            [
+                Rect::new_unchecked(x1, y1.clone(), px.clone(), y2.clone()),
+                Rect::new_unchecked(px, y1, x2, y2),
+            ]
+        })
+    }
+
+    /// Vertically splits this rectangle to 2 parts, using the given splitting line.
+    ///
+    /// Returns `None` if the splitting line is outside this rectangle.
+    ///
+    /// The one with smaller coordinates is returned first.
+    pub fn split_y(&self, split_y: T) -> Option<[Self; 2]> {
+        let Rect { x1, y1, x2, y2 } = self.clone();
+        let py = split_y;
+
+        if py < y1 || y2 < py {
+            return None;
+        }
+
+        Some(unsafe {
+            [
+                Rect::new_unchecked(x1.clone(), y1, x2.clone(), py.clone()),
+                Rect::new_unchecked(x1, py, x2, y2),
+            ]
+        })
+    }
+
+    /// Returns an iterator over the colums of the rectangle (`x1..=x2`).
+    ///
+    /// The values are always separated by the distance of 1.
+    pub fn cols(&self) -> impl Clone + FusedIterator + Iterator<Item = T> {
+        let Rect { x1, x2, .. } = self.clone();
+        iter::successors(Some(x1), move |x| {
+            if *x < x2 {
+                Some(x.clone() + T::one())
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Returns an iterator over the rows of the rectangle (`y1..=y2`).
+    ///
+    /// The values are always separated by the distance of 1.
+    pub fn rows(&self) -> impl Clone + FusedIterator + Iterator<Item = T> {
+        let Rect { y1, y2, .. } = self.clone();
+        iter::successors(Some(y1), move |y| {
+            if *y < y2 {
+                Some(y.clone() + T::one())
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Returns an iterator over all of the points of the rectangle.
+    ///
+    /// The points are in a grid with the separation of 1 in both axises.
+    pub fn points(&self) -> impl Clone + FusedIterator + Iterator<Item = Point<T>> {
+        let Rect { x1, y1, x2, y2 } = self.clone();
+        iter::successors(Some(Point::new(x1.clone(), y1)), move |p| {
+            if p.x < x2 {
+                Some(p.clone().map_x(|x| x + T::one()))
+            } else if p.y < y2 {
+                Some(Point::new(x1.clone(), p.y.clone() + T::one()))
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Returns an iterator over the corners of this rectangle
+    pub fn corners(&self) -> impl Clone + FusedIterator + Iterator<Item = Point<T>> {
+        std::array::IntoIter::new([self.min_point(), self.x1y2(), self.max_point(), self.x2y1()])
+    }
+
+    /// Returns the point `(x1, y1)`.
+    pub fn min_point(&self) -> Point<T> {
+        Point::new(self.x1.clone(), self.y1.clone())
+    }
+
+    /// Returns the point `(x2, y2)`.
+    pub fn max_point(&self) -> Point<T> {
+        Point::new(self.x2.clone(), self.y2.clone())
+    }
+
+    /// Returns the point `(x1, y2)`.
+    pub fn x1y2(&self) -> Point<T> {
+        Point::new(self.x1.clone(), self.y2.clone())
+    }
+
+    /// Returns the point `(x2, y1)`.
+    pub fn x2y1(&self) -> Point<T> {
+        Point::new(self.x2.clone(), self.y1.clone())
+    }
+
+    /// Returns a line between `(x1,y1)` and `(x2,y2)`
+    pub fn rising_diagonal(&self) -> Line<T> {
+        let Rect { x1, y1, x2, y2 } = self.clone();
+        Line { x1, y1, x2, y2 }
+    }
+
+    /// Returns a line between `(x1,y2)` and `(x2,y1)`
+    pub fn falling_diagonal(&self) -> Line<T> {
+        [self.x1y2(), self.x2y1()].into()
+    }
+
+    /// Returns the horizontal side with low y, so `(y1, [x1, x2])`.
+    pub fn min_abscissa(&self) -> (T, [T; 2]) {
+        let Rect { y1, x1, x2, .. } = self.clone();
+        (y1, [x1, x2])
+    }
+
+    /// Returns the horizontal side with low y as a line, so `((x1, y1), (x2, y1))`.
+    pub fn min_abscissa_line(&self) -> Line<T> {
+        let Rect { y1, x1, x2, .. } = self.clone();
+        ((x1, y1.clone()), (x2, y1)).into()
+    }
+
+    /// Returns the horizontal side with high y, so `(y2, [x1, x2])`.
+    pub fn max_abscissa(&self) -> (T, [T; 2]) {
+        let Rect { y2, x1, x2, .. } = self.clone();
+        (y2, [x1, x2])
+    }
+
+    /// Returns the horizontal side with high y as a line, so `((x1, y2), (x2, y2))`.
+    pub fn max_abscissa_line(&self) -> Line<T> {
+        let Rect { y2, x1, x2, .. } = self.clone();
+        ((x1, y2.clone()), (x2, y2)).into()
+    }
+
+    /// Returns the vertical side with low x, so `(x1, [y1, y2])`.
+    pub fn min_ordinate(&self) -> (T, [T; 2]) {
+        let Rect { x1, y1, y2, .. } = self.clone();
+        (x1, [y1, y2])
+    }
+
+    /// Returns the vertical side with low x as a line, so `((x1, y1), (x1, y2))`.
+    pub fn min_ordinate_line(&self) -> Line<T> {
+        let Rect { x1, y1, y2, .. } = self.clone();
+        ((x1.clone(), y1), (x1, y2)).into()
+    }
+
+    /// Returns the vertical side with high x, so `(x2, [y1, y2])`.
+    pub fn max_ordinate(&self) -> (T, [T; 2]) {
+        let Rect { x2, y1, y2, .. } = self.clone();
+        (x2, [y1, y2])
+    }
+
+    /// Returns the vertical side with high x as a line, so `((x2, y1), (x2, y2))`.
+    pub fn max_ordinate_line(&self) -> Line<T> {
+        let Rect { x2, y1, y2, .. } = self.clone();
+        ((x2.clone(), y1), (x2, y2)).into()
+    }
+}
+
+impl<T: fmt::Display> fmt::Display for Rect<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}, {}, {}, {}", self.x1, self.y1, self.x2, self.y2)
+    }
+}
+
+impl<T> From<[T; 4]> for Rect<T> {
+    fn from([x1, y1, x2, y2]: [T; 4]) -> Self {
+        Self { x1, y1, x2, y2 }
+    }
+}
+
+impl<T> From<[[T; 2]; 2]> for Rect<T> {
+    fn from([[x1, y1], [x2, y2]]: [[T; 2]; 2]) -> Self {
+        Self { x1, y1, x2, y2 }
+    }
+}
+
+impl<T: PartialOrd> From<[Point<T>; 2]> for Rect<T> {
+    /// Same as [`Rect::from_corners`].
+    fn from([min, max]: [Point<T>; 2]) -> Self {
+        Self::from_corners(min, max)
+    }
+}
+
+impl<T> From<(T, T, T, T)> for Rect<T> {
+    fn from((x1, y1, x2, y2): (T, T, T, T)) -> Self {
+        Self { x1, y1, x2, y2 }
+    }
+}
+
+impl<T> From<((T, T), (T, T))> for Rect<T> {
+    fn from(((x1, y1), (x2, y2)): ((T, T), (T, T))) -> Self {
+        Self { x1, y1, x2, y2 }
+    }
+}
+
+impl<T: PartialOrd> From<(Point<T>, Point<T>)> for Rect<T> {
+    /// Same as [`Rect::from_corners`].
+    fn from((min, max): (Point<T>, Point<T>)) -> Self {
+        Self::from_corners(min, max)
+    }
+}
+
+impl<T> From<Rect<T>> for [T; 4] {
+    fn from(Rect { x1, y1, x2, y2 }: Rect<T>) -> Self {
+        [x1, y1, x2, y2]
+    }
+}
+
+impl<T> From<Rect<T>> for [[T; 2]; 2] {
+    fn from(Rect { x1, y1, x2, y2 }: Rect<T>) -> Self {
+        [[x1, y1], [x2, y2]]
+    }
+}
+
+impl<T> From<Rect<T>> for [Point<T>; 2] {
+    fn from(Rect { x1, y1, x2, y2 }: Rect<T>) -> Self {
+        [Point::new(x1, y1), Point::new(x2, y2)]
+    }
+}
+
+impl<T> From<Rect<T>> for (T, T, T, T) {
+    fn from(Rect { x1, y1, x2, y2 }: Rect<T>) -> Self {
+        (x1, y1, x2, y2)
+    }
+}
+
+impl<T> From<Rect<T>> for ((T, T), (T, T)) {
+    fn from(Rect { x1, y1, x2, y2 }: Rect<T>) -> Self {
+        ((x1, y1), (x2, y2))
+    }
+}
+
+impl<T> From<Rect<T>> for (Point<T>, Point<T>) {
+    fn from(Rect { x1, y1, x2, y2 }: Rect<T>) -> Self {
+        (Point::new(x1, y1), Point::new(x2, y2))
+    }
+}
