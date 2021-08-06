@@ -70,6 +70,20 @@ impl<T> Rect<T> {
         Self::from_corners((l.x1, l.y1), (l.x2, l.y2))
     }
 
+    /// Converts self into a tuple.
+    ///
+    /// This is for when the type can't be inferred when using just `Into::into`.
+    pub fn into_tuple(self) -> (T, T, T, T) {
+        self.into()
+    }
+
+    /// Converts self into an array.
+    ///
+    /// This is for when the type can't be inferred when using just `Into::into`.
+    pub fn into_array(self) -> [T; 4] {
+        self.into()
+    }
+
     /// Maps a function to all of the coordinates.
     #[must_use]
     pub fn map<F, U>(self, f: F) -> Rect<U>
@@ -267,16 +281,16 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
 
     /// Returns true if this rectangle intersects the given rectangle.
     pub fn does_intersect(&self, other: &Self) -> bool {
-        let [ax1, ay1, ax2, ay2]: [T; 4] = self.clone().into();
-        let [bx1, by1, bx2, by2]: [T; 4] = other.clone().into();
+        let [ax1, ay1, ax2, ay2] = self.clone().into_array();
+        let [bx1, by1, bx2, by2] = other.clone().into_array();
         ax1 <= bx2 && ax2 >= bx1 && ay1 <= by2 && ay2 >= by1
     }
 
     /// Intersects this rectangle with another and returns the intersection if it exists.
     pub fn intersect(&self, other: &Self) -> Option<Self> {
         if self.does_intersect(other) {
-            let [ax1, ay1, ax2, ay2]: [T; 4] = self.clone().into();
-            let [bx1, by1, bx2, by2]: [T; 4] = other.clone().into();
+            let [ax1, ay1, ax2, ay2] = self.clone().into_array();
+            let [bx1, by1, bx2, by2] = other.clone().into_array();
             Some(Self::new(
                 max(ax1, bx1),
                 max(ay1, by1),

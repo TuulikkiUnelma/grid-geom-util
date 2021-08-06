@@ -29,11 +29,15 @@ impl<T> Point<T> {
     }
 
     /// Converts self into a tuple.
+    ///
+    /// This is for when the type can't be inferred when using just `Into::into`.
     pub fn into_tuple(self) -> (T, T) {
         self.into()
     }
 
     /// Converts self into an array.
+    ///
+    /// This is for when the type can't be inferred when using just `Into::into`.
     pub fn into_array(self) -> [T; 2] {
         self.into()
     }

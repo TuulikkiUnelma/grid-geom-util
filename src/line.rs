@@ -31,6 +31,20 @@ impl<T> Line<T> {
         (a, b).into()
     }
 
+    /// Converts self into a tuple.
+    ///
+    /// This is for when the type can't be inferred when using just `Into::into`.
+    pub fn into_tuple(self) -> (T, T, T, T) {
+        self.into()
+    }
+
+    /// Converts self into an array.
+    ///
+    /// This is for when the type can't be inferred when using just `Into::into`.
+    pub fn into_array(self) -> [T; 4] {
+        self.into()
+    }
+
     /// Returns true if the ending point has greater-or-equal x-coordinate as the beginning.
     pub fn is_x_sorted(&self) -> bool
     where
