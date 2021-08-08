@@ -8,7 +8,7 @@ use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
 
-/// A 2D point.
+/// A generic 2D point.
 #[derive(
     Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
 )]
@@ -23,26 +23,26 @@ pub struct Point<T> {
 }
 
 impl<T> Point<T> {
-    /// Creates a new point
+    /// Creates a new point.
     pub fn new(x: T, y: T) -> Self {
         Self { x, y }
     }
 
     /// Converts self into a tuple.
     ///
-    /// This is for when the type can't be inferred when using just `Into::into`.
+    /// This is for when the type can't be inferred when using just [`Into::into`].
     pub fn into_tuple(self) -> (T, T) {
         self.into()
     }
 
     /// Converts self into an array.
     ///
-    /// This is for when the type can't be inferred when using just `Into::into`.
+    /// This is for when the type can't be inferred when using just [`Into::into`].
     pub fn into_array(self) -> [T; 2] {
         self.into()
     }
 
-    /// Maps a function to the both of the coordinates.
+    /// Maps a function to the both of the coordinates and returns them as a new point.
     #[must_use]
     pub fn map<F, U>(self, f: F) -> Point<U>
     where
@@ -54,7 +54,7 @@ impl<T> Point<T> {
         }
     }
 
-    /// Maps a function to the x coordinate.
+    /// Maps a function to the x coordinate and returns it as a new point.
     #[must_use]
     pub fn map_x<F>(self, f: F) -> Point<T>
     where
@@ -66,7 +66,7 @@ impl<T> Point<T> {
         }
     }
 
-    /// Maps a function to the y coordinate.
+    /// Maps a function to the y coordinate and returns it as a new point.
     #[must_use]
     pub fn map_y<F>(self, f: F) -> Point<T>
     where
@@ -103,7 +103,7 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
         self.x.clone() + self.y.clone()
     }
 
-    /// Returns the point's distance from the origo in the euclid space.
+    /// Returns the point's distance from the origo in the usual euclid space.
     pub fn distance_euclid(&self) -> f32
     where
         T: AsPrimitive<f32>,
@@ -113,7 +113,7 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
         (x * x + y * y).sqrt()
     }
 
-    /// Returns the taxicab/manhattan distance from the origo.
+    /// Returns the [taxicab/manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry) from the origo.
     ///
     /// Same as `point.abs().sum()`
     pub fn distance_taxi(&self) -> T
@@ -123,7 +123,7 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
         self.abs().sum()
     }
 
-    /// Returns the Chebyshev/king's move distance from the origo.
+    /// Returns the [Chebyshev/king's move distance](https://en.wikipedia.org/wiki/Chebyshev_distance) from the origo.
     ///
     /// Same as `point.abs().max_coord()`.
     pub fn distance_king(&self) -> T
@@ -147,7 +147,9 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
 
     /// Returns the cardinal direction that this point/vector points towards the most.
     ///
-    /// If the length is 0, returns `CardDir::North`.
+    /// The values of coordinates is assumed to grow south-east, ie. x grows towards east and y grows towards south.
+    ///
+    /// If the length is 0, returns [`CardDir::North`].
     pub fn cardinal(&self) -> CardDir
     where
         T: Signed,
@@ -181,7 +183,8 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
 }
 
 impl<T: Copy + Num + FromPrimitive> Point<T> {
-    /// Returns an iterator over the Von Neumann neighborhood of this point.
+    /// Returns an iterator over the [Von Neumann neighborhood](https://en.wikipedia.org/wiki/Von_Neumann_neighborhood)
+    /// of this point.
     pub fn neighbors_neumann(&self) -> impl Iterator<Item = Self> {
         let f = |x| FromPrimitive::from_i32(x).unwrap();
         let s = *self;
@@ -190,7 +193,8 @@ impl<T: Copy + Num + FromPrimitive> Point<T> {
             .map(move |(x, y)| s + Point::new(f(*x), f(*y)))
     }
 
-    /// Returns an iterator over the Moore neighborhood of this point.
+    /// Returns an iterator over the [Moore neighborhood](https://en.wikipedia.org/wiki/Moore_neighborhood)
+    /// of this point.
     ///
     /// The 4 orthogonal (Von Neumann) neighbors are returned first.
     pub fn neighbors_moore(&self) -> impl Iterator<Item = Self> {

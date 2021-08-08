@@ -4,7 +4,7 @@ use num_traits::{AsPrimitive, Num, One, Signed, Zero};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-/// A simple line segment from point `(x1, y1)` to `(x2, y1)`.
+/// A generic line segment from the point `(x1, y1)` to `(x2, y2)`.
 #[derive(
     Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
 )]
@@ -33,19 +33,19 @@ impl<T> Line<T> {
 
     /// Converts self into a tuple.
     ///
-    /// This is for when the type can't be inferred when using just `Into::into`.
+    /// This is for when the type can't be inferred when using just [`Into::into`].
     pub fn into_tuple(self) -> (T, T, T, T) {
         self.into()
     }
 
     /// Converts self into an array.
     ///
-    /// This is for when the type can't be inferred when using just `Into::into`.
+    /// This is for when the type can't be inferred when using just [`Into::into`].
     pub fn into_array(self) -> [T; 4] {
         self.into()
     }
 
-    /// Returns true if the ending point has greater-or-equal x-coordinate as the beginning.
+    /// Returns true if the ending point has greater or equal x-coordinate than the beginning.
     pub fn is_x_sorted(&self) -> bool
     where
         T: PartialOrd,
@@ -53,7 +53,7 @@ impl<T> Line<T> {
         self.x1 <= self.x2
     }
 
-    /// Returns true if the ending point has greater-or-equal y-coordinate as the beginning.
+    /// Returns true if the ending point has greater or equal y-coordinate than the beginning.
     pub fn is_y_sorted(&self) -> bool
     where
         T: PartialOrd,
@@ -61,7 +61,7 @@ impl<T> Line<T> {
         self.y1 <= self.y2
     }
 
-    /// Maps a function to all of the coordinates.
+    /// Maps a function to all of the coordinates and returns them as a new line.
     #[must_use]
     pub fn map<F, U>(self, f: F) -> Line<U>
     where
@@ -75,7 +75,7 @@ impl<T> Line<T> {
         }
     }
 
-    /// Maps a function to both of the x coordinates.
+    /// Maps a function to both of the x coordinates and returns it as a new line.
     #[must_use]
     pub fn map_x<F>(self, f: F) -> Self
     where
@@ -89,7 +89,7 @@ impl<T> Line<T> {
         }
     }
 
-    /// Maps a function to both of the y coordinates.
+    /// Maps a function to both of the y coordinates and returns it as a new line.
     #[must_use]
     pub fn map_y<F>(self, f: F) -> Self
     where
@@ -103,7 +103,7 @@ impl<T> Line<T> {
         }
     }
 
-    /// Maps a function to the beginning and end point.
+    /// Maps a function to the beginning and end point and returns them as a new line.
     #[must_use]
     pub fn map_points<F, U>(self, f: F) -> Line<U>
     where
@@ -113,7 +113,7 @@ impl<T> Line<T> {
         Line::from_points(f((x1, y1).into()), f((x2, y2).into()))
     }
 
-    /// Maps a function to the beginning point.
+    /// Maps a function to the beginning point and returns it as a new line.
     #[must_use]
     pub fn map_begin<F>(self, f: F) -> Self
     where
@@ -127,7 +127,7 @@ impl<T> Line<T> {
         }
     }
 
-    /// Maps a function to the ending point.
+    /// Maps a function to the ending point and returns it as a new line.
     #[must_use]
     pub fn map_end<F>(self, f: F) -> Self
     where
@@ -222,9 +222,9 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
         self.vector().distance_euclid()
     }
 
-    /// Returns the taxicab/manhattan length of this line.
+    /// Returns the [taxicab/manhattan length](https://en.wikipedia.org/wiki/Taxicab_geometry) of this line.
     ///
-    /// Same as `line.vector().distance_taxi()`
+    /// Same as [`line.vector().distance_taxi()`](Point::distance_taxi).
     pub fn length_taxi(&self) -> T
     where
         T: Signed,
@@ -232,9 +232,9 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
         self.vector().distance_taxi()
     }
 
-    /// Returns the Chebyshev/king's move length of this line.
+    /// Returns the [Chebyshev/king's move length](https://en.wikipedia.org/wiki/Chebyshev_distance) of this line.
     ///
-    /// Same as `line.vector().distance_king()`.
+    /// Same as [`line.vector().distance_king()`](Point::distance_king).
     pub fn length_king(&self) -> T
     where
         T: Signed,
@@ -293,6 +293,9 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
     }
 }
 
+/// An iterator returning a line's points according to the Bresenham algorithm.
+///
+/// Created with [`Line::bresenham`].
 pub struct BresenhamIter<T: PartialOrd + One + Zero + Signed> {
     u_is_x: bool,
     u: T,

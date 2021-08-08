@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 mod line;
 mod point;
 mod rect;
@@ -27,6 +29,8 @@ fn min<T: PartialOrd>(a: T, b: T) -> T {
 }
 
 /// A cardinal direction towards one of the axises.
+///
+/// Returned by [`Point::cardinal`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CardDir {
     /// Towards positive X

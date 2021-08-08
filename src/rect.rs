@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::iter::{self, FusedIterator};
 
-/// A generic axis-aligned rectangle.
+/// A generic axis-aligned rectangle from the point `(x1, y1)` to `(x2, y2)`.
 ///
 /// The range of values is **inclusive**, meaning that the point `(x2, y2)` is inside the rectangle's area.
 /// This means that a rectangle with the area of 0 is impossible to create.
@@ -77,19 +77,19 @@ impl<T> Rect<T> {
 
     /// Converts self into a tuple.
     ///
-    /// This is for when the type can't be inferred when using just `Into::into`.
+    /// This is for when the type can't be inferred when using just [`Into::into`].
     pub fn into_tuple(self) -> (T, T, T, T) {
         self.into()
     }
 
     /// Converts self into an array.
     ///
-    /// This is for when the type can't be inferred when using just `Into::into`.
+    /// This is for when the type can't be inferred when using just [`Into::into`].
     pub fn into_array(self) -> [T; 4] {
         self.into()
     }
 
-    /// Maps a function to all of the coordinates.
+    /// Maps a function to all of the coordinates and returns them as a new rectangle.
     #[must_use]
     pub fn map<F, U>(self, f: F) -> Rect<U>
     where
@@ -103,7 +103,7 @@ impl<T> Rect<T> {
         }
     }
 
-    /// Maps a function to both of the x coordinates.
+    /// Maps a function to both of the x coordinates and returns it as a new rectangle.
     #[must_use]
     pub fn map_x<F>(self, f: F) -> Self
     where
@@ -117,7 +117,7 @@ impl<T> Rect<T> {
         }
     }
 
-    /// Maps a function to both of the y coordinates.
+    /// Maps a function to both of the y coordinates and returns it as a new rectangle.
     #[must_use]
     pub fn map_y<F>(self, f: F) -> Self
     where
@@ -131,7 +131,7 @@ impl<T> Rect<T> {
         }
     }
 
-    /// Maps a function to the rectangle's corners.
+    /// Maps a function to the rectangle's corners and returns it as a new rectangle.
     ///
     /// Will rearrange the coordinates to make it a valid rectangle if their order is changed by `f`.
     #[must_use]
@@ -582,7 +582,6 @@ impl<T: PartialOrd> From<((T, T), (T, T))> for Rect<T> {
 }
 
 impl<T: PartialOrd> From<(Point<T>, Point<T>)> for Rect<T> {
-    /// Same as [`Rect::from_corners`].
     fn from((min, max): (Point<T>, Point<T>)) -> Self {
         Self::from_corners(min, max)
     }
