@@ -19,7 +19,10 @@ use std::iter::{self, FusedIterator};
     Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
 )]
 #[serde(
-    bound(serialize = "T: Clone + Serialize"),
+    bound(
+        serialize = "T: Clone + Serialize",
+        deserialize = "T: PartialOrd + Deserialize<'de>"
+    ),
     into = "[T; 4]",
     from = "[T; 4]"
 )]
@@ -547,15 +550,15 @@ impl<T: fmt::Display> fmt::Display for Rect<T> {
     }
 }
 
-impl<T> From<[T; 4]> for Rect<T> {
+impl<T: PartialOrd> From<[T; 4]> for Rect<T> {
     fn from([x1, y1, x2, y2]: [T; 4]) -> Self {
-        Self { x1, y1, x2, y2 }
+        Self::new(x1, y1, x2, y2)
     }
 }
 
-impl<T> From<[[T; 2]; 2]> for Rect<T> {
+impl<T: PartialOrd> From<[[T; 2]; 2]> for Rect<T> {
     fn from([[x1, y1], [x2, y2]]: [[T; 2]; 2]) -> Self {
-        Self { x1, y1, x2, y2 }
+        Self::new(x1, y1, x2, y2)
     }
 }
 
@@ -566,15 +569,15 @@ impl<T: PartialOrd> From<[Point<T>; 2]> for Rect<T> {
     }
 }
 
-impl<T> From<(T, T, T, T)> for Rect<T> {
+impl<T: PartialOrd> From<(T, T, T, T)> for Rect<T> {
     fn from((x1, y1, x2, y2): (T, T, T, T)) -> Self {
-        Self { x1, y1, x2, y2 }
+        Self::new(x1, y1, x2, y2)
     }
 }
 
-impl<T> From<((T, T), (T, T))> for Rect<T> {
+impl<T: PartialOrd> From<((T, T), (T, T))> for Rect<T> {
     fn from(((x1, y1), (x2, y2)): ((T, T), (T, T))) -> Self {
-        Self { x1, y1, x2, y2 }
+        Self::new(x1, y1, x2, y2)
     }
 }
 
