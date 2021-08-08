@@ -62,8 +62,8 @@ impl<T> Rect<T> {
         T: PartialOrd,
     {
         let [a, b] = [a.into(), b.into()];
-        let [x1, x2] = if a.x < b.x { [a.x, b.x] } else { [b.x, a.x] };
-        let [y1, y2] = if a.y < b.y { [a.y, b.y] } else { [b.y, a.y] };
+        let [x1, x2] = if a.x <= b.x { [a.x, b.x] } else { [b.x, a.x] };
+        let [y1, y2] = if a.y <= b.y { [a.y, b.y] } else { [b.y, a.y] };
         Self { x1, y1, x2, y2 }
     }
 
@@ -90,44 +90,56 @@ impl<T> Rect<T> {
     }
 
     /// Maps a function to all of the coordinates and returns them as a new rectangle.
+    ///
+    /// Will rearrange the coordinates to make it a valid rectangle if their order is changed by `f`.
     #[must_use]
     pub fn map<F, U>(self, f: F) -> Rect<U>
     where
+        U: PartialOrd,
         F: Fn(T) -> U,
     {
-        Rect {
-            x1: f(self.x1),
-            y1: f(self.y1),
-            x2: f(self.x2),
-            y2: f(self.y2),
-        }
+        Rect::new(f(self.x1), f(self.y1), f(self.x2), f(self.y2))
     }
 
     /// Maps a function to both of the x coordinates and returns it as a new rectangle.
+    ///
+    /// Will rearrange the coordinates to make it a valid rectangle if their order is changed by `f`.
     #[must_use]
     pub fn map_x<F>(self, f: F) -> Self
     where
+        T: PartialOrd,
         F: Fn(T) -> T,
     {
+        let nx1 = f(self.x1);
+        let nx2 = f(self.x2);
+        let (x1, x2) = if nx1 <= nx2 { (nx1, nx2) } else { (nx2, nx1) };
+
         Rect {
-            x1: f(self.x1),
+            x1,
             y1: self.y1,
-            x2: f(self.x2),
+            x2,
             y2: self.y2,
         }
     }
 
     /// Maps a function to both of the y coordinates and returns it as a new rectangle.
+    ///
+    /// Will rearrange the coordinates to make it a valid rectangle if their order is changed by `f`.
     #[must_use]
     pub fn map_y<F>(self, f: F) -> Self
     where
+        T: PartialOrd,
         F: Fn(T) -> T,
     {
+        let ny1 = f(self.y1);
+        let ny2 = f(self.y2);
+        let (y1, y2) = if ny1 <= ny2 { (ny1, ny2) } else { (ny2, ny1) };
+
         Rect {
             x1: self.x1,
-            y1: f(self.y1),
+            y1,
             x2: self.x2,
-            y2: f(self.y2),
+            y2,
         }
     }
 
