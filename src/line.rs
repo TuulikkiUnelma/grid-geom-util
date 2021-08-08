@@ -1,4 +1,4 @@
-use crate::Point;
+use crate::{Point, Rect};
 
 use num_traits::{AsPrimitive, Num, One, Signed, Zero};
 use serde::{Deserialize, Serialize};
@@ -240,6 +240,13 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
         T: Signed,
     {
         self.vector().distance_king()
+    }
+
+    /// Returns the bounding rectangle of this line.
+    ///
+    /// Same as `(self.begin(), self.end()).into()`.
+    pub fn rect(&self) -> Rect<T> {
+        Rect::from_corners(self.begin(), self.end())
     }
 
     /// Returns an iterator over the points in this line using the Bresenham algorithm.
