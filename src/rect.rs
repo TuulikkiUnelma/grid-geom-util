@@ -190,11 +190,15 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     }
 
     /// Returns the difference of the x-coordinate of the rectangle, which is `x2 - x1`.
+    ///
+    /// Same as `width - 1`.
     pub fn diff_x(&self) -> T {
         self.x2.clone() - self.x1.clone()
     }
 
     /// Returns the difference of the y-coordinate of the rectangle, which is `y2 - y1`.
+    ///
+    /// Same as `height - 1`.
     pub fn diff_y(&self) -> T {
         self.y2.clone() - self.y1.clone()
     }
@@ -239,9 +243,16 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         min(self.diff_x(), self.diff_y())
     }
 
-    /// Returns the area of the rectange, which is `width * height`.
+    /// Returns the area of the rectangle, which is `width * height`.
     pub fn area(&self) -> T {
         self.width() * self.height()
+    }
+
+    /// Returns the product of the differences rectangle's x and y coordinates.
+    ///
+    /// Same as `diff_x * diff_y` or `(width - 1) * (height - 1)`.
+    pub fn diff_prod(&self) -> T {
+        self.diff_x() * self.diff_y()
     }
 
     /// Returns how square this rectangle is from `[0, 1]`.
@@ -455,10 +466,12 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         })
     }
 
-    /// Returns an iterator over all of the points of the rectangle.
+    /// Returns an iterator over all of the points of this rectangle.
+    ///
+    /// The returned order is left-to-right (from x1 to x2), and then up-to-down (from y1 to y2).
     ///
     /// The points are in a grid with the separation of 1 in both axises.
-    pub fn points(&self) -> impl Clone + FusedIterator + Iterator<Item = Point<T>> {
+    pub fn points(&self) -> impl Clone + Iterator<Item = Point<T>> {
         let Rect { x1, y1, x2, y2 } = self.clone();
         iter::successors(Some(Point::new(x1.clone(), y1)), move |p| {
             if p.x < x2 {
@@ -469,6 +482,57 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
                 None
             }
         })
+    }
+
+    /// Returns an iterator over all of the border points of this rectangle.
+    ///
+    /// The returned order is clockwise first from `(x1, y1)` to `(x2, y1)`, then to `(x2, y2)`,
+    /// then to `(x1, y2)`, and then back to `(x1, y1)` (excluding the `(x1, y1)` point).
+    /// No duplicate points will be returned.
+    ///
+    /// The points are in a grid with the separation of 1 in both axises.
+    pub fn points_border(&self) -> impl Clone + Iterator<Item = Point<T>> {
+        let Rect { x1, y1, x2, y2 } = self.clone();
+
+        // for the edge cases
+        let w_is_1 = self.diff_x() == T::zero();
+        let h_is_1 = self.diff_y() == T::zero();
+
+        let mut points = Vec::new();
+        let mut f = |x: &T, y: &T| points.push(Point::new(x.clone(), y.clone()));
+
+        // (x1..=x2, y1)
+        let mut x = x1.clone();
+        while x <= x2 {
+            f(&x, &y1);
+            x = x + T::one();
+        }
+        if !h_is_1 {
+            // (x2, y1+1..=y2)
+            let mut y = y1.clone() + T::one();
+            while y <= y2 {
+                f(&x2, &y);
+                y = y + T::one();
+            }
+
+            if !w_is_1 {
+                // (x2-1..x1, y2)
+                let mut x = x2.clone() - T::one();
+                while x > x1 {
+                    f(&x, &y2);
+                    x = x - T::one();
+                }
+
+                // (x1, y2..y1)
+                let mut y = y2.clone();
+                while y > y1 {
+                    f(&x1, &y);
+                    y = y - T::one();
+                }
+            }
+        }
+
+        points.into_iter()
     }
 
     /// Returns an iterator over the corners of this rectangle
