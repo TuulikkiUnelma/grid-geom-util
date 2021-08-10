@@ -12,7 +12,7 @@ use std::fmt;
 
 /// A generic max function.
 fn max<T: PartialOrd>(a: T, b: T) -> T {
-    if a > b {
+    if a >= b {
         a
     } else {
         b
@@ -21,7 +21,7 @@ fn max<T: PartialOrd>(a: T, b: T) -> T {
 
 /// A generic min function.
 fn min<T: PartialOrd>(a: T, b: T) -> T {
-    if a < b {
+    if a <= b {
         a
     } else {
         b
@@ -211,5 +211,90 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn rect_point_iters_1x1() {
+        let f = |x, y| Some(Point::new(x, y));
+
+        let rect_1x1 = Rect::new(6, 6, 6, 6);
+        let mut p = rect_1x1.points();
+        let mut p_b = rect_1x1.points_border();
+
+        assert_eq!(p.next(), f(6, 6));
+        assert_eq!(p.next(), None);
+
+        assert_eq!(p_b.next(), f(6, 6));
+        assert_eq!(p_b.next(), None);
+    }
+
+    #[test]
+    fn rect_point_iters_3x1() {
+        let f = |x, y| Some(Point::new(x, y));
+
+        let rect_3x1 = Rect::new(5, 5, 8, 5);
+        let mut p = rect_3x1.points();
+        let mut p_b = rect_3x1.points_border();
+
+        assert_eq!(p.next(), f(5, 5));
+        assert_eq!(p.next(), f(6, 5));
+        assert_eq!(p.next(), f(7, 5));
+        assert_eq!(p.next(), f(8, 5));
+        assert_eq!(p.next(), None);
+
+        assert_eq!(p_b.next(), f(5, 5));
+        assert_eq!(p_b.next(), f(6, 5));
+        assert_eq!(p_b.next(), f(7, 5));
+        assert_eq!(p_b.next(), f(8, 5));
+        assert_eq!(p_b.next(), None);
+    }
+
+    #[test]
+    fn rect_point_iters_1x3() {
+        let f = |x, y| Some(Point::new(x, y));
+
+        let rect_1x3 = Rect::new(5, 5, 5, 8);
+        let mut p = rect_1x3.points();
+        let mut p_b = rect_1x3.points_border();
+
+        assert_eq!(p.next(), f(5, 5));
+        assert_eq!(p.next(), f(5, 6));
+        assert_eq!(p.next(), f(5, 7));
+        assert_eq!(p.next(), f(5, 8));
+        assert_eq!(p.next(), None);
+
+        assert_eq!(p_b.next(), f(5, 5));
+        assert_eq!(p_b.next(), f(5, 6));
+        assert_eq!(p_b.next(), f(5, 7));
+        assert_eq!(p_b.next(), f(5, 8));
+        assert_eq!(p_b.next(), None);
+    }
+
+    #[test]
+    fn rect_point_iters_3x3() {
+        let f = |x, y| Some(Point::new(x, y));
+
+        let rect_3x3 = Rect::new(-1, -1, 1, 1);
+        let mut p = rect_3x3.points();
+        let mut p_b = rect_3x3.points_border();
+
+        assert_eq!(p.next(), f(-1, -1));
+        assert_eq!(p.next(), f(0, -1));
+        assert_eq!(p.next(), f(1, -1));
+        assert_eq!(p.next(), f(-1, 0));
+        assert_eq!(p.next(), f(0, 0));
+        assert_eq!(p.next(), f(1, 0));
+        assert_eq!(p.next(), f(-1, 1));
+        assert_eq!(p.next(), f(0, 1));
+        assert_eq!(p.next(), f(1, 1));
+
+        assert_eq!(p_b.next(), f(-1, -1));
+        assert_eq!(p_b.next(), f(0, -1));
+        assert_eq!(p_b.next(), f(1, -1));
+        assert_eq!(p_b.next(), f(1, 0));
+        assert_eq!(p_b.next(), f(1, 1));
+        assert_eq!(p_b.next(), f(0, 1));
+        assert_eq!(p_b.next(), f(-1, 1));
+        assert_eq!(p_b.next(), f(-1, 0));
     }
 }
