@@ -158,11 +158,19 @@ impl<T> Rect<T> {
 }
 
 impl<T: Clone + Num + PartialOrd> Rect<T> {
-    /// Creates a new rectangle from the given minimum point and dimensions
-    pub fn from_dim<P: Into<Point<T>>>(min_point: P, dimensions: [T; 2]) -> Self {
+    /// Creates a new rectangle from the given minimum point and dimensions.
+    ///
+    /// Same as `rect.from_diff(min_point, [width - 1, height - 1])`.
+    pub fn from_dim<P: Into<Point<T>>>(min_point: P, [width, height]: [T; 2]) -> Self {
+        Self::from_diff(min_point, [width - T::one(), height - T::one()])
+    }
+
+    /// Creates a new rectangle from the given minimum point and differences.
+    ///
+    /// Same as `rect.from_dim(min_point, [dx + 1, dy + 1])`.
+    pub fn from_diff<P: Into<Point<T>>>(min_point: P, [dx, dy]: [T; 2]) -> Self {
         let Point { x, y } = min_point.into();
-        let [w, h] = dimensions;
-        Self::new(x.clone(), y.clone(), x + w, y + h)
+        Self::new(x.clone(), y.clone(), x + dx, y + dy)
     }
 
     /// Creates a rectangle around the given centerpoint by using the given x and y extents / half-dimensions.
