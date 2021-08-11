@@ -229,7 +229,7 @@ mod tests {
     }
 
     #[test]
-    fn rect_point_iters_3x1() {
+    fn rect_point_iters_4x1() {
         let f = |x, y| Some(Point::new(x, y));
 
         let rect_3x1 = Rect::new(5, 5, 8, 5);
@@ -250,7 +250,7 @@ mod tests {
     }
 
     #[test]
-    fn rect_point_iters_1x3() {
+    fn rect_point_iters_1x4() {
         let f = |x, y| Some(Point::new(x, y));
 
         let rect_1x3 = Rect::new(5, 5, 5, 8);
@@ -287,6 +287,7 @@ mod tests {
         assert_eq!(p.next(), f(-1, 1));
         assert_eq!(p.next(), f(0, 1));
         assert_eq!(p.next(), f(1, 1));
+        assert_eq!(p.next(), None);
 
         assert_eq!(p_b.next(), f(-1, -1));
         assert_eq!(p_b.next(), f(0, -1));
@@ -296,5 +297,6 @@ mod tests {
         assert_eq!(p_b.next(), f(0, 1));
         assert_eq!(p_b.next(), f(-1, 1));
         assert_eq!(p_b.next(), f(-1, 0));
+        assert_eq!(p_b.next(), None);
     }
 }
