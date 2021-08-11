@@ -42,7 +42,9 @@ impl<T> Rect<T> {
     where
         T: PartialOrd,
     {
-        Self::from_corners((x1, y1), (x2, y2))
+        let [x1, x2] = if x1 <= x2 { [x1, x2] } else { [x2, x1] };
+        let [y1, y2] = if y1 <= y2 { [y1, y2] } else { [y2, y1] };
+        Self { x1, y1, x2, y2 }
     }
 
     /// Creates a new rectangle without checking the validity of inputs.
@@ -61,9 +63,7 @@ impl<T> Rect<T> {
         P: Into<Point<T>>,
         T: PartialOrd,
     {
-        let [a, b] = [a.into(), b.into()];
-        let [x1, x2] = if a.x <= b.x { [a.x, b.x] } else { [b.x, a.x] };
-        let [y1, y2] = if a.y <= b.y { [a.y, b.y] } else { [b.y, a.y] };
+        let [[x1, y1], [x2, y2]]: [[T; 2]; 2] = [a.into().into(), b.into().into()];
         Self { x1, y1, x2, y2 }
     }
 
@@ -270,6 +270,45 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         let two = || T::one() + T::one();
         let two = || Point::new(two(), two());
         (self.min_point() + self.max_point()) / two()
+    }
+
+    /// Shrinks this rectangle by the given x and y margins.
+    ///
+    /// If width or height of the rectangle would shrink under 1, it's capped.
+    pub fn shrink(&self, [margin_x, margin_y]: [T; 2]) -> Rect<T> {
+        let two = || T::one() + T::one();
+        let Rect { x1, y1, x2, y2 } = self.clone();
+
+        let (x1, x2) = if margin_x.clone() * two() < self.diff_x() {
+            (x1 + margin_x.clone(), x2 - margin_x)
+        } else {
+            let m = (x2.clone() - x1.clone()) / two();
+            (m.clone(), m)
+        };
+
+        let (y1, y2) = if margin_y.clone() * two() < self.diff_y() {
+            (y1 + margin_y.clone(), y2 - margin_y)
+        } else {
+            let m = (y2.clone() - y1.clone()) / two();
+            (m.clone(), m)
+        };
+
+        Rect { x1, y1, x2, y2 }
+    }
+
+    /// Grows this rectangle by the given x and y margins.
+    ///
+    /// Similar to [`Rect::shrink`] except that this doesn't do the width and height checks,
+    /// and will happily shrink the rectangle under the width or height of 1 if the margins are negative and too big.
+    /// The returned rectangle will however be valid as the coordinates are flipped by [`Rect::new`] if needed.
+    pub fn grow(&self, [margin_x, margin_y]: [T; 2]) -> Rect<T> {
+        let Rect { x1, y1, x2, y2 } = self.clone();
+        Rect::new(
+            x1 - margin_x.clone(),
+            y1 - margin_y.clone(),
+            x2 + margin_x,
+            y2 + margin_y,
+        )
     }
 
     /// Returns true if this rectangle fits within the given `larger` rectangle.
