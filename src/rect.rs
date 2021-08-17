@@ -282,7 +282,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
 
     /// Shrinks this rectangle by the given x and y margins.
     ///
-    /// If width or height of the rectangle would shrink under 1, it's capped.
+    /// If width or height of the rectangle would shrink under 1, it's capped around the midpoint.
     pub fn shrink(&self, [margin_x, margin_y]: [T; 2]) -> Rect<T> {
         let two = || T::one() + T::one();
         let Rect { x1, y1, x2, y2 } = self.clone();
@@ -290,14 +290,14 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         let (x1, x2) = if margin_x.clone() * two() < self.diff_x() {
             (x1 + margin_x.clone(), x2 - margin_x)
         } else {
-            let m = (x2.clone() - x1.clone()) / two();
+            let m = (x2.clone() + x1.clone()) / two();
             (m.clone(), m)
         };
 
         let (y1, y2) = if margin_y.clone() * two() < self.diff_y() {
             (y1 + margin_y.clone(), y2 - margin_y)
         } else {
-            let m = (y2.clone() - y1.clone()) / two();
+            let m = (y2.clone() + y1.clone()) / two();
             (m.clone(), m)
         };
 
