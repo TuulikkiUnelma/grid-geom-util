@@ -299,4 +299,40 @@ mod tests {
         assert_eq!(p_b.next(), f(-1, 0));
         assert_eq!(p_b.next(), None);
     }
+
+    #[test]
+    fn rect_shrink() {
+        let f = Rect::new;
+
+        let r1x1 = f(8, 8, 8, 8);
+        let r4x1 = f(5, 5, 8, 5);
+        let r1x4 = f(5, 5, 5, 8);
+        let r4x4 = f(0, 0, 3, 3);
+
+        assert_eq!(r1x1.shrink([10, 10]), r1x1);
+
+        assert_eq!(r4x1.shrink([1, 0]), f(6, 5, 7, 5));
+        assert_eq!(r4x1.shrink([2, 0]), f(6, 5, 6, 5));
+        assert_eq!(r4x1.shrink([3, 0]), f(6, 5, 6, 5));
+        assert_eq!(r4x1.shrink([0, 1]), r4x1);
+        assert_eq!(r4x1.shrink([0, 10]), r4x1);
+
+        assert_eq!(r1x4.shrink([0, 1]), f(5, 6, 5, 7));
+        assert_eq!(r1x4.shrink([0, 2]), f(5, 6, 5, 6));
+        assert_eq!(r1x4.shrink([0, 3]), f(5, 6, 5, 6));
+        assert_eq!(r1x4.shrink([1, 0]), r1x4);
+        assert_eq!(r1x4.shrink([10, 0]), r1x4);
+
+        assert_eq!(r4x4.shrink([1, 1]), f(1, 1, 2, 2));
+        assert_eq!(r4x4.shrink([2, 2]), f(1, 1, 1, 1));
+        assert_eq!(r4x4.shrink([3, 3]), f(1, 1, 1, 1));
+
+        assert_eq!(r4x4.shrink([1, 0]), f(1, 0, 2, 3));
+        assert_eq!(r4x4.shrink([2, 0]), f(1, 0, 1, 3));
+        assert_eq!(r4x4.shrink([3, 0]), f(1, 0, 1, 3));
+
+        assert_eq!(r4x4.shrink([0, 1]), f(0, 1, 3, 2));
+        assert_eq!(r4x4.shrink([0, 2]), f(0, 1, 3, 1));
+        assert_eq!(r4x4.shrink([0, 3]), f(0, 1, 3, 1));
+    }
 }
