@@ -290,14 +290,14 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         let (x1, x2) = if margin_x.clone() * two() < self.diff_x() {
             (x1 + margin_x.clone(), x2 - margin_x)
         } else {
-            let m = (x2.clone() + x1.clone()) / two();
+            let m = (x2 + x1) / two();
             (m.clone(), m)
         };
 
         let (y1, y2) = if margin_y.clone() * two() < self.diff_y() {
             (y1 + margin_y.clone(), y2 - margin_y)
         } else {
-            let m = (y2.clone() + y1.clone()) / two();
+            let m = (y2 + y1) / two();
             (m.clone(), m)
         };
 
@@ -564,14 +564,14 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
 
             if !w_is_1 {
                 // (x2-1..x1, y2)
-                let mut x = x2.clone() - T::one();
+                let mut x = x2 - T::one();
                 while x > x1 {
                     f(&x, &y2);
                     x = x - T::one();
                 }
 
                 // (x1, y2..y1)
-                let mut y = y2.clone();
+                let mut y = y2;
                 while y > y1 {
                     f(&x1, &y);
                     y = y - T::one();
