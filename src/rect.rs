@@ -12,7 +12,7 @@ use std::iter::{self, FusedIterator};
 /// This means that a rectangle with the area of 0 is impossible to create.
 ///
 /// If `x1` isn't greater than or equal to `x2`, or if `y1` isn't greater than or equal to `y2`,
-/// then using this rectangle's methods is undefined behaviour and may panic.
+/// then using this rectangle's methods is undefined behavior and may panic.
 ///
 /// It's marked as `#[non_exhaustive]` to stop anyone from accidentally creating a malformed rectangle.
 #[derive(
@@ -52,12 +52,12 @@ impl<T> Rect<T> {
     /// # Safety
     ///
     /// Make sure that x2 and y2 are greater or equal to x1 and y2 respectively.
-    /// Otherwise the returned rectangle will be invalid and likely to cause panics or undefined behaviour when used.
+    /// Otherwise the returned rectangle will be invalid and likely to cause panics or undefined behavior when used.
     pub unsafe fn new_unchecked(x1: T, y1: T, x2: T, y2: T) -> Self {
         Self { x1, y1, x2, y2 }
     }
 
-    /// Creates a rectangle between the given opposite cornerpoints.
+    /// Creates a rectangle between the given opposite corner points.
     pub fn from_corners<P>(a: P, b: P) -> Self
     where
         P: Into<Point<T>>,
@@ -67,7 +67,7 @@ impl<T> Rect<T> {
         Self { x1, y1, x2, y2 }
     }
 
-    /// Creates a rectangle using the beginning and endpoints of a line as opposite cornerpoints.
+    /// Creates a rectangle using the beginning and endpoints of a line as opposite corner points.
     pub fn from_line(l: Line<T>) -> Self
     where
         T: PartialOrd,
@@ -381,14 +381,14 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     ///
     /// If either of `cols` or `rows` is a non-positive number, this will return an empty vector.
     ///
-    /// The returned rectangles will be evenly split into the given colums and rows.
+    /// The returned rectangles will be evenly split into the given columns and rows.
     /// They are in order of increasing coordinates, with rows grouped together.
     ///
-    /// If x or y range can't be evenly split into the given amount of colums or rows,
+    /// If x or y range can't be evenly split into the given amount of columns or rows,
     /// then the last sub-rectangle will be of smaller size.
     ///
-    /// If the given amount of colums or rows is greater than the rectangle's width or height respectively,
-    /// then only width or height amount of colums or rows are returned.
+    /// If the given amount of columns or rows is greater than the rectangle's width or height respectively,
+    /// then only width or height amount of columns or rows are returned.
     ///
     /// The rectangles will be overlapping on their borders.
     /// For example if this rectangle goes from `x1 = 0` to `x2 = 10`, and you split it to 2 columns,
@@ -485,7 +485,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         })
     }
 
-    /// Returns an iterator over the colums of the rectangle (`x1..=x2`).
+    /// Returns an iterator over the columns of the rectangle (`x1..=x2`).
     ///
     /// The values are always separated by the distance of 1.
     pub fn cols(&self) -> impl Clone + FusedIterator + Iterator<Item = T> {
@@ -584,7 +584,12 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
 
     /// Returns an iterator over the corners of this rectangle
     pub fn corners(&self) -> impl Clone + FusedIterator + Iterator<Item = Point<T>> {
-        std::array::IntoIter::new([self.min_point(), self.x1y2(), self.max_point(), self.x2y1()])
+        std::iter::IntoIterator::into_iter([
+            self.min_point(),
+            self.x1y2(),
+            self.max_point(),
+            self.x2y1(),
+        ])
     }
 
     /// Returns the point `(x1, y1)`.
