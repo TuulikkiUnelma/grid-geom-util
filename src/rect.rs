@@ -390,7 +390,8 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// If the given amount of columns or rows is greater than the rectangle's width or height respectively,
     /// then only width or height amount of columns or rows are returned.
     ///
-    /// The rectangles will be overlapping on their borders.
+    /// The returned rectangles will share borders.
+    ///
     /// For example if this rectangle goes from `x1 = 0` to `x2 = 10`, and you split it to 2 columns,
     /// you will get rectangles that go from `x1 = 0` to `x2 = 5` and from `x1 = 5` to `x2 = 10`.
     pub fn split(&self, cols: T, rows: T) -> Vec<Self>
@@ -426,6 +427,8 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// Returns `None` if the splitting point is outside this rectangle.
     ///
     /// They are returned in the increasing order of coordinates, with the top row first.
+    ///
+    /// The returned rectangles will share borders.
     pub fn split_quad(&self, splitting_point: Point<T>) -> Option<[Self; 4]> {
         if !splitting_point.is_inside(self) {
             return None;
@@ -448,6 +451,8 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// Returns `None` if the splitting line is outside this rectangle.
     ///
     /// The one with smaller coordinates is returned first.
+    ///
+    /// The returned rectangles will share borders.
     pub fn split_x(&self, split_x: T) -> Option<[Self; 2]> {
         let Rect { x1, y1, x2, y2 } = self.clone();
         let px = split_x;
@@ -469,6 +474,8 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// Returns `None` if the splitting line is outside this rectangle.
     ///
     /// The one with smaller coordinates is returned first.
+    ///
+    /// The returned rectangles will share borders.
     pub fn split_y(&self, split_y: T) -> Option<[Self; 2]> {
         let Rect { x1, y1, x2, y2 } = self.clone();
         let py = split_y;
@@ -488,7 +495,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// Returns an iterator over the columns of the rectangle (`x1..=x2`).
     ///
     /// The values are always separated by the distance of 1.
-    pub fn cols(&self) -> impl Clone + FusedIterator + Iterator<Item = T> {
+    pub fn cols(&self) -> impl Clone + Iterator<Item = T> + FusedIterator {
         let Rect { x1, x2, .. } = self.clone();
         iter::successors(Some(x1), move |x| {
             if *x < x2 {
@@ -502,7 +509,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// Returns an iterator over the rows of the rectangle (`y1..=y2`).
     ///
     /// The values are always separated by the distance of 1.
-    pub fn rows(&self) -> impl Clone + FusedIterator + Iterator<Item = T> {
+    pub fn rows(&self) -> impl Clone + Iterator<Item = T> + FusedIterator {
         let Rect { y1, y2, .. } = self.clone();
         iter::successors(Some(y1), move |y| {
             if *y < y2 {
@@ -518,7 +525,9 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// The returned order is left-to-right (from x1 to x2), and then up-to-down (from y1 to y2).
     ///
     /// The points are in a grid with the separation of 1 in both axises.
-    pub fn points(&self) -> impl Clone + Iterator<Item = Point<T>> {
+    ///
+    /// The borders are included.
+    pub fn points(&self) -> impl Clone + Iterator<Item = Point<T>> + FusedIterator {
         let Rect { x1, y1, x2, y2 } = self.clone();
         iter::successors(Some(Point::new(x1.clone(), y1)), move |p| {
             if p.x < x2 {
@@ -538,7 +547,10 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// No duplicate points will be returned.
     ///
     /// The points are in a grid with the separation of 1 in both axises.
-    pub fn points_border(&self) -> impl Clone + Iterator<Item = Point<T>> {
+    pub fn points_border(
+        &self,
+    ) -> impl Clone + Iterator<Item = Point<T>> + FusedIterator + ExactSizeIterator + DoubleEndedIterator
+    {
         let Rect { x1, y1, x2, y2 } = self.clone();
 
         // for the edge cases
@@ -583,7 +595,10 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     }
 
     /// Returns an iterator over the corners of this rectangle
-    pub fn corners(&self) -> impl Clone + FusedIterator + Iterator<Item = Point<T>> {
+    pub fn corners(
+        &self,
+    ) -> impl Clone + Iterator<Item = Point<T>> + FusedIterator + ExactSizeIterator + DoubleEndedIterator
+    {
         std::iter::IntoIterator::into_iter([
             self.min_point(),
             self.x1y2(),

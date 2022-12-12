@@ -2,7 +2,7 @@ use crate::{Point, Rect};
 
 use num_traits::{AsPrimitive, Num, One, Signed, Zero};
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use std::{fmt, iter::FusedIterator};
 
 /// A generic line segment from the point `(x1, y1)` to `(x2, y2)`.
 #[derive(
@@ -296,7 +296,8 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
 /// An iterator returning a line's points according to the Bresenham algorithm.
 ///
 /// Created with [`Line::bresenham`].
-pub struct BresenhamIter<T: PartialOrd + One + Zero + Signed> {
+#[derive(Debug, Clone, Copy)]
+pub struct BresenhamIter<T> {
     u_is_x: bool,
     u: T,
     v: T,
@@ -346,6 +347,8 @@ where
         }
     }
 }
+
+impl<T> FusedIterator for BresenhamIter<T> where T: Clone + PartialOrd + One + Zero + Signed {}
 
 impl<T: fmt::Display> fmt::Display for Line<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

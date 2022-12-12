@@ -4,6 +4,7 @@ use num_traits::{AsPrimitive, FromPrimitive, Num, Signed};
 use serde::{Deserialize, Serialize};
 
 use std::fmt;
+use std::iter::FusedIterator;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
@@ -185,7 +186,9 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
 impl<T: Copy + Num + FromPrimitive> Point<T> {
     /// Returns an iterator over the [Von Neumann neighborhood](https://en.wikipedia.org/wiki/Von_Neumann_neighborhood)
     /// of this point.
-    pub fn neighbors_neumann(&self) -> impl Iterator<Item = Self> {
+    pub fn neighbors_neumann(
+        &self,
+    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator {
         let f = |x| FromPrimitive::from_i32(x).unwrap();
         let s = *self;
         [(1i32, 0), (0, 1), (-1, 0), (0, -1)]
@@ -197,7 +200,9 @@ impl<T: Copy + Num + FromPrimitive> Point<T> {
     /// of this point.
     ///
     /// The 4 orthogonal (Von Neumann) neighbors are returned first.
-    pub fn neighbors_moore(&self) -> impl Iterator<Item = Self> {
+    pub fn neighbors_moore(
+        &self,
+    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator {
         let f = |x| FromPrimitive::from_i32(x).unwrap();
         let s = *self;
         [
