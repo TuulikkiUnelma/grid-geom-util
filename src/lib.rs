@@ -82,11 +82,11 @@ mod tests {
         for p in test_points(-500, 500) {
             let (x, y) = p.into();
 
-            let eucl = p.distance_euclid();
+            let euclid = p.distance_euclid();
             let taxi = p.distance_taxi();
             let king = p.distance_king();
 
-            assert_eq!(eucl, ((x * x + y * y) as f32).sqrt());
+            assert_eq!(euclid, ((x * x + y * y) as f32).sqrt());
             assert_eq!(taxi, x.abs() + y.abs());
             assert_eq!(king, x.abs().max(y.abs()));
         }

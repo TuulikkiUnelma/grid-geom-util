@@ -103,7 +103,7 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
         self.x.clone() + self.y.clone()
     }
 
-    /// Returns the point's distance from the origo in the usual euclid space.
+    /// Returns the point's distance from the origin in the usual euclid space.
     pub fn distance_euclid(&self) -> f32
     where
         T: AsPrimitive<f32>,
@@ -113,7 +113,7 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
         (x * x + y * y).sqrt()
     }
 
-    /// Returns the [taxicab/manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry) from the origo.
+    /// Returns the [taxicab/manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry) from the origin.
     ///
     /// Same as `point.abs().sum()`
     pub fn distance_taxi(&self) -> T
@@ -123,7 +123,7 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
         self.abs().sum()
     }
 
-    /// Returns the [Chebyshev/king's move distance](https://en.wikipedia.org/wiki/Chebyshev_distance) from the origo.
+    /// Returns the [Chebyshev/king's move distance](https://en.wikipedia.org/wiki/Chebyshev_distance) from the origin.
     ///
     /// Same as `point.abs().max_coord()`.
     pub fn distance_king(&self) -> T
