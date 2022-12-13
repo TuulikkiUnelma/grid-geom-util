@@ -252,7 +252,7 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
     /// Returns an iterator over the points in this line using the Bresenham algorithm.
     ///
     /// The returned points will be on a (1,1)-grid and the returned order will be arbitrary.
-    pub fn bresenham(&self) -> BresenhamIter<T>
+    pub fn bresenham_iter(&self) -> BresenhamIter<T>
     where
         T: Signed,
     {

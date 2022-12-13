@@ -186,7 +186,7 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
 impl<T: Copy + Num + FromPrimitive> Point<T> {
     /// Returns an iterator over the [Von Neumann neighborhood](https://en.wikipedia.org/wiki/Von_Neumann_neighborhood)
     /// of this point.
-    pub fn neighbors_neumann(
+    pub fn neighbors_neumann_iter(
         &self,
     ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator {
         let f = |x| FromPrimitive::from_i32(x).unwrap();
@@ -200,7 +200,7 @@ impl<T: Copy + Num + FromPrimitive> Point<T> {
     /// of this point.
     ///
     /// The 4 orthogonal (Von Neumann) neighbors are returned first.
-    pub fn neighbors_moore(
+    pub fn neighbors_moore_iter(
         &self,
     ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator {
         let f = |x| FromPrimitive::from_i32(x).unwrap();

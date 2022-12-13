@@ -105,7 +105,11 @@ mod tests {
         let f = Point::new;
         let p = f(10, -15);
 
-        for (i, (n, m)) in p.neighbors_neumann().zip(p.neighbors_moore()).enumerate() {
+        for (i, (n, m)) in p
+            .neighbors_neumann_iter()
+            .zip(p.neighbors_moore_iter())
+            .enumerate()
+        {
             // first 4 should be same
             assert_eq!(n, m);
             assert!(i <= 4);
@@ -120,8 +124,8 @@ mod tests {
             .collect();
         let moore: HashSet<Point<i32>> = diag.union(&neumann).copied().collect();
 
-        assert_eq!(neumann, p.neighbors_neumann().collect());
-        assert_eq!(moore, p.neighbors_moore().collect());
+        assert_eq!(neumann, p.neighbors_neumann_iter().collect());
+        assert_eq!(moore, p.neighbors_moore_iter().collect());
     }
 
     #[test]
@@ -163,7 +167,7 @@ mod tests {
         .into_iter()
         .collect();
 
-        assert_eq!(points, line.bresenham().collect());
+        assert_eq!(points, line.bresenham_iter().collect());
     }
 
     #[test]
@@ -218,8 +222,8 @@ mod tests {
         let f = |x, y| Some(Point::new(x, y));
 
         let rect_1x1 = Rect::new(6, 6, 6, 6);
-        let mut p = rect_1x1.points();
-        let mut p_b = rect_1x1.points_border();
+        let mut p = rect_1x1.points_iter();
+        let mut p_b = rect_1x1.points_border_iter();
 
         assert_eq!(p.next(), f(6, 6));
         assert_eq!(p.next(), None);
@@ -233,8 +237,8 @@ mod tests {
         let f = |x, y| Some(Point::new(x, y));
 
         let rect_3x1 = Rect::new(5, 5, 8, 5);
-        let mut p = rect_3x1.points();
-        let mut p_b = rect_3x1.points_border();
+        let mut p = rect_3x1.points_iter();
+        let mut p_b = rect_3x1.points_border_iter();
 
         assert_eq!(p.next(), f(5, 5));
         assert_eq!(p.next(), f(6, 5));
@@ -254,8 +258,8 @@ mod tests {
         let f = |x, y| Some(Point::new(x, y));
 
         let rect_1x3 = Rect::new(5, 5, 5, 8);
-        let mut p = rect_1x3.points();
-        let mut p_b = rect_1x3.points_border();
+        let mut p = rect_1x3.points_iter();
+        let mut p_b = rect_1x3.points_border_iter();
 
         assert_eq!(p.next(), f(5, 5));
         assert_eq!(p.next(), f(5, 6));
@@ -275,8 +279,8 @@ mod tests {
         let f = |x, y| Some(Point::new(x, y));
 
         let rect_3x3 = Rect::new(-1, -1, 1, 1);
-        let mut p = rect_3x3.points();
-        let mut p_b = rect_3x3.points_border();
+        let mut p = rect_3x3.points_iter();
+        let mut p_b = rect_3x3.points_border_iter();
 
         assert_eq!(p.next(), f(-1, -1));
         assert_eq!(p.next(), f(0, -1));

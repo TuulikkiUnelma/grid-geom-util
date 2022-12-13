@@ -495,7 +495,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// Returns an iterator over the columns of the rectangle (`x1..=x2`).
     ///
     /// The values are always separated by the distance of 1.
-    pub fn cols(&self) -> impl Clone + Iterator<Item = T> + FusedIterator {
+    pub fn cols_iter(&self) -> impl Clone + Iterator<Item = T> + FusedIterator {
         let Rect { x1, x2, .. } = self.clone();
         iter::successors(Some(x1), move |x| {
             if *x < x2 {
@@ -509,7 +509,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// Returns an iterator over the rows of the rectangle (`y1..=y2`).
     ///
     /// The values are always separated by the distance of 1.
-    pub fn rows(&self) -> impl Clone + Iterator<Item = T> + FusedIterator {
+    pub fn rows_iter(&self) -> impl Clone + Iterator<Item = T> + FusedIterator {
         let Rect { y1, y2, .. } = self.clone();
         iter::successors(Some(y1), move |y| {
             if *y < y2 {
@@ -527,7 +527,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// The points are in a grid with the separation of 1 in both axises.
     ///
     /// The borders are included.
-    pub fn points(&self) -> impl Clone + Iterator<Item = Point<T>> + FusedIterator {
+    pub fn points_iter(&self) -> impl Clone + Iterator<Item = Point<T>> + FusedIterator {
         let Rect { x1, y1, x2, y2 } = self.clone();
         iter::successors(Some(Point::new(x1.clone(), y1)), move |p| {
             if p.x < x2 {
@@ -547,7 +547,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// No duplicate points will be returned.
     ///
     /// The points are in a grid with the separation of 1 in both axises.
-    pub fn points_border(
+    pub fn points_border_iter(
         &self,
     ) -> impl Clone + Iterator<Item = Point<T>> + FusedIterator + ExactSizeIterator + DoubleEndedIterator
     {
