@@ -324,7 +324,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// Sharing borders (eg. both x1 values are the same) counts as being inside.
     /// This means that using the same rectangle as both arguments will return true.
     pub fn is_inside(&self, larger: &Self) -> bool {
-        self.corners().all(|p| p.is_inside(larger))
+        self.corners_iter().all(|p| p.is_inside(larger))
     }
 
     /// Returns a new rectangle that's the same shape but moved to fit inside the given `larger` rectangle.
@@ -595,7 +595,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     }
 
     /// Returns an iterator over the corners of this rectangle
-    pub fn corners(
+    pub fn corners_iter(
         &self,
     ) -> impl Clone + Iterator<Item = Point<T>> + FusedIterator + ExactSizeIterator + DoubleEndedIterator
     {
@@ -644,7 +644,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         (y1, [x1, x2])
     }
 
-    /// Returns the horizontal side with low y as a line, so `((x1, y1), (x2, y1))`.
+    /// Returns the horizontal side with low y as a line, so `(x1, y1) - (x2, y1)`.
     pub fn min_abscissa_line(&self) -> Line<T> {
         let Rect { y1, x1, x2, .. } = self.clone();
         ((x1, y1.clone()), (x2, y1)).into()
@@ -656,7 +656,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         (y2, [x1, x2])
     }
 
-    /// Returns the horizontal side with high y as a line, so `((x1, y2), (x2, y2))`.
+    /// Returns the horizontal side with high y as a line, so `(x1, y2) - (x2, y2)`.
     pub fn max_abscissa_line(&self) -> Line<T> {
         let Rect { y2, x1, x2, .. } = self.clone();
         ((x1, y2.clone()), (x2, y2)).into()
@@ -668,7 +668,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         (x1, [y1, y2])
     }
 
-    /// Returns the vertical side with low x as a line, so `((x1, y1), (x1, y2))`.
+    /// Returns the vertical side with low x as a line, so `(x1, y1) - (x1, y2)`.
     pub fn min_ordinate_line(&self) -> Line<T> {
         let Rect { x1, y1, y2, .. } = self.clone();
         ((x1.clone(), y1), (x1, y2)).into()
@@ -680,7 +680,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         (x2, [y1, y2])
     }
 
-    /// Returns the vertical side with high x as a line, so `((x2, y1), (x2, y2))`.
+    /// Returns the vertical side with high x as a line, so `(x2, y1) - (x2, y2)`.
     pub fn max_ordinate_line(&self) -> Line<T> {
         let Rect { x2, y1, y2, .. } = self.clone();
         ((x2.clone(), y1), (x2, y2)).into()
