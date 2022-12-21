@@ -1,6 +1,6 @@
 use crate::{max, min, CardDir, Rect};
 
-use num_traits::{AsPrimitive, FromPrimitive, Num, Signed};
+use num_traits::{AsPrimitive, Num, Signed};
 use serde::{Deserialize, Serialize};
 
 use std::fmt;
@@ -183,17 +183,25 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
     }
 }
 
-impl<T: Copy + Num + FromPrimitive> Point<T> {
+impl<T: Clone + Num> Point<T> {
     /// Returns an iterator over the [Von Neumann neighborhood](https://en.wikipedia.org/wiki/Von_Neumann_neighborhood)
     /// of this point.
     pub fn neighbors_neumann_iter(
         &self,
     ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator {
-        let f = |x| FromPrimitive::from_i32(x).unwrap();
-        let s = *self;
-        [(1i32, 0), (0, 1), (-1, 0), (0, -1)]
-            .iter()
-            .map(move |(x, y)| s + Point::new(f(*x), f(*y)))
+        let one = T::one;
+        let Point { x, y } = self;
+        let x = || x.clone();
+        let y = || y.clone();
+
+        [
+            [x() + one(), y()],
+            [x(), y() + one()],
+            [x() - one(), y()],
+            [x(), y() - one()],
+        ]
+        .map(Into::into)
+        .into_iter()
     }
 
     /// Returns an iterator over the [Moore neighborhood](https://en.wikipedia.org/wiki/Moore_neighborhood)
@@ -203,20 +211,42 @@ impl<T: Copy + Num + FromPrimitive> Point<T> {
     pub fn neighbors_moore_iter(
         &self,
     ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator {
-        let f = |x| FromPrimitive::from_i32(x).unwrap();
-        let s = *self;
+        let one = T::one;
+        let Point { x, y } = self;
+        let x = || x.clone();
+        let y = || y.clone();
+
         [
-            (1, 0),
-            (0, 1),
-            (-1, 0),
-            (0, -1),
-            (1, 1),
-            (1, -1),
-            (-1, 1),
-            (-1, -1),
+            [x() + one(), y()],
+            [x(), y() + one()],
+            [x() - one(), y()],
+            [x(), y() - one()],
+            [x() + one(), y() + one()],
+            [x() + one(), y() - one()],
+            [x() - one(), y() + one()],
+            [x() - one(), y() - one()],
         ]
-        .iter()
-        .map(move |(x, y)| s + Point::new(f(*x), f(*y)))
+        .map(Into::into)
+        .into_iter()
+    }
+
+    /// Returns an iterator over the diagonal neighbors of this point.
+    pub fn neighbors_diagonal_iter(
+        &self,
+    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator {
+        let one = T::one;
+        let Point { x, y } = self;
+        let x = || x.clone();
+        let y = || y.clone();
+
+        [
+            [x() + one(), y() + one()],
+            [x() + one(), y() - one()],
+            [x() - one(), y() + one()],
+            [x() - one(), y() - one()],
+        ]
+        .map(Into::into)
+        .into_iter()
     }
 }
 
