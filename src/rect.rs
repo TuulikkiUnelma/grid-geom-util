@@ -1,5 +1,6 @@
 use crate::{max, min, Line, Point};
 
+use num::Integer;
 use num::{traits::AsPrimitive, Num};
 use serde::{Deserialize, Serialize};
 
@@ -376,6 +377,21 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         } else {
             None
         }
+    }
+
+    /// Snaps the corner points to the nearest multiple of the given increment.
+    ///
+    /// Halfway cases are rounded down towards negative infinity.
+    ///
+    /// The increment's sign doesn't affect the result.
+    ///
+    /// # Panics
+    /// Panics if either of the increment's values are 0.
+    pub fn snap(&self, snap_increment: &Point<T>) -> Self
+    where
+        T: Integer,
+    {
+        self.clone().map_corners(|p| p.snap(snap_increment))
     }
 
     /// Splits this rectangle to a group of several sub-rectangles.

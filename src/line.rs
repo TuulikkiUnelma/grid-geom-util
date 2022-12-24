@@ -1,6 +1,6 @@
 use crate::{Point, Rect};
 
-use num::{traits::AsPrimitive, Num, One, Signed, Zero};
+use num::{traits::AsPrimitive, Integer, Num, One, Signed, Zero};
 use serde::{Deserialize, Serialize};
 use std::{fmt, iter::FusedIterator};
 
@@ -241,6 +241,21 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
     /// Same as `(self.begin(), self.end()).into()`.
     pub fn rect(&self) -> Rect<T> {
         Rect::from_corners(self.begin(), self.end())
+    }
+
+    /// Snaps the endpoints of this line to the nearest multiple of the given increment.
+    ///
+    /// Halfway cases are rounded down towards negative infinity.
+    ///
+    /// The increment's sign doesn't affect the result.
+    ///
+    /// # Panics
+    /// Panics if either of the increment's values are 0.
+    pub fn snap(&self, snap_increment: &Point<T>) -> Self
+    where
+        T: Integer,
+    {
+        self.clone().map_points(|p| p.snap(snap_increment))
     }
 
     /// Returns an iterator over the points in this line using the Bresenham algorithm.

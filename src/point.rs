@@ -292,7 +292,7 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
     ///
     /// # Panics
     /// Panics if either of the increment's values are 0.
-    pub fn snap(&self, snap_increment: &Point<T>) -> Point<T>
+    pub fn snap(&self, snap_increment: &Point<T>) -> Self
     where
         T: Integer,
     {
