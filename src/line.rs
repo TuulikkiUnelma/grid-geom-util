@@ -1,6 +1,6 @@
 use crate::{Point, Rect};
 
-use num_traits::{AsPrimitive, Num, One, Signed, Zero};
+use num::{traits::AsPrimitive, Num, One, Signed, Zero};
 use serde::{Deserialize, Serialize};
 use std::{fmt, iter::FusedIterator};
 
@@ -225,20 +225,14 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
     /// Returns the [taxicab/manhattan length](https://en.wikipedia.org/wiki/Taxicab_geometry) of this line.
     ///
     /// Same as [`line.vector().distance_taxi()`](Point::distance_taxi).
-    pub fn length_taxi(&self) -> T
-    where
-        T: Signed,
-    {
+    pub fn length_taxi(&self) -> T {
         self.vector().distance_taxi()
     }
 
     /// Returns the [Chebyshev/king's move length](https://en.wikipedia.org/wiki/Chebyshev_distance) of this line.
     ///
     /// Same as [`line.vector().distance_king()`](Point::distance_king).
-    pub fn length_king(&self) -> T
-    where
-        T: Signed,
-    {
+    pub fn length_king(&self) -> T {
         self.vector().distance_king()
     }
 

@@ -1,6 +1,6 @@
 use crate::{max, min, Line, Point};
 
-use num_traits::{AsPrimitive, Num};
+use num::{traits::AsPrimitive, Num};
 use serde::{Deserialize, Serialize};
 
 use std::fmt;
@@ -9,12 +9,13 @@ use std::iter::{self, FusedIterator};
 /// A generic axis-aligned rectangle from the point `(x1, y1)` to `(x2, y2)`.
 ///
 /// The range of values is **inclusive**, meaning that the point `(x2, y2)` is inside the rectangle's area.
-/// This means that a rectangle with the area of 0 is impossible to create.
+/// This also means that the smallest possible area for a rectangle is 1,
+/// and a rectangle with the area of 0 is impossible to create.
 ///
 /// If `x1` isn't greater than or equal to `x2`, or if `y1` isn't greater than or equal to `y2`,
 /// then using this rectangle's methods is undefined behavior and may panic.
 ///
-/// It's marked as `#[non_exhaustive]` to stop anyone from accidentally creating a malformed rectangle.
+/// It's marked as `#[non_exhaustive]` to make people less likely to create such malformed rectangles.
 #[derive(
     Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
 )]

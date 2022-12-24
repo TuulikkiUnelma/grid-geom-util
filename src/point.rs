@@ -1,6 +1,6 @@
 use crate::{max, min, CardDir, Rect};
 
-use num_traits::{AsPrimitive, Num, Signed};
+use num::{traits::AsPrimitive, Integer, Num, Signed};
 use serde::{Deserialize, Serialize};
 
 use std::fmt;
@@ -44,10 +44,12 @@ impl<T> Point<T> {
     }
 
     /// Maps a function to the both of the coordinates and returns them as a new point.
+    ///
+    /// The function will be applied to the x-coordinate first.
     #[must_use]
-    pub fn map<F, U>(self, f: F) -> Point<U>
+    pub fn map<F, U>(self, mut f: F) -> Point<U>
     where
-        F: Fn(T) -> U,
+        F: FnMut(T) -> U,
     {
         Point {
             x: f(self.x),
@@ -57,9 +59,9 @@ impl<T> Point<T> {
 
     /// Maps a function to the x coordinate and returns it as a new point.
     #[must_use]
-    pub fn map_x<F>(self, f: F) -> Point<T>
+    pub fn map_x<F>(self, mut f: F) -> Point<T>
     where
-        F: Fn(T) -> T,
+        F: FnMut(T) -> T,
     {
         Point {
             x: f(self.x),
@@ -69,14 +71,36 @@ impl<T> Point<T> {
 
     /// Maps a function to the y coordinate and returns it as a new point.
     #[must_use]
-    pub fn map_y<F>(self, f: F) -> Point<T>
+    pub fn map_y<F>(self, mut f: F) -> Point<T>
     where
-        F: Fn(T) -> T,
+        F: FnMut(T) -> T,
     {
         Point {
             x: self.x,
             y: f(self.y),
         }
+    }
+
+    /// Checks if both values fulfill the given predicate function
+    ///
+    /// The predicate is short-circuiting and applied to the x-coordinate first.
+    #[must_use]
+    pub fn all<F>(self, mut predicate: F) -> bool
+    where
+        F: FnMut(T) -> bool,
+    {
+        predicate(self.x) && predicate(self.y)
+    }
+
+    /// Checks if either value fulfill the given predicate function
+    ///
+    /// The predicate is short-circuiting and applied to the x-coordinate first.
+    #[must_use]
+    pub fn any<F>(self, mut predicate: F) -> bool
+    where
+        F: FnMut(T) -> bool,
+    {
+        predicate(self.x) || predicate(self.y)
     }
 }
 
@@ -99,6 +123,90 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
         Point::new(self.x.clone().abs(), self.y.clone().abs())
     }
 
+    /// Applies the absolute value function for x and y.
+    ///
+    /// Does not use the standard `abs` implementation.
+    /// Can be used for unsigned values as well, although it has no effect.
+    pub fn abs_generic(&self) -> Self {
+        let abs = |x: T| if x < T::zero() { T::zero() - x } else { x };
+        Point::new(abs(self.x.clone()), abs(self.y.clone()))
+    }
+
+    /// Applies the given function to the coordinates of two points.
+    ///
+    /// The function is applied to the x-coordinate first.
+    pub fn op<U, O, F>(&self, other: &Point<U>, mut operator: F) -> Point<O>
+    where
+        U: Clone,
+        F: FnMut(&T, &U) -> O,
+    {
+        Point::new(operator(&self.x, &other.x), operator(&self.y, &other.y))
+    }
+
+    /// Applies the given function to the coordinates of many points.
+    ///
+    /// The function is applied to the x-coordinates first.
+    pub fn op_many<'a, I, O, F>(arguments: I, mut operator: F) -> Point<O>
+    where
+        T: Copy,
+        I: IntoIterator<Item = Point<T>>,
+        F: FnMut(&[T]) -> O,
+    {
+        let (x_inputs, y_inputs): (Vec<T>, Vec<T>) =
+            arguments.into_iter().map(Point::into_tuple).unzip();
+        Point::new(operator(&x_inputs[..]), operator(&y_inputs[..]))
+    }
+
+    /// Applies the given predicate between the coordinates of two points and returns if both filled it
+    ///
+    /// The function is applied to the x-coordinate first.
+    /// Equivalent to `self.op(other, predicate).all(|x| x)`.
+    pub fn op_all<U, F>(&self, other: &Point<U>, predicate: F) -> bool
+    where
+        U: Clone,
+        F: FnMut(&T, &U) -> bool,
+    {
+        self.op(other, predicate).all(|x| x)
+    }
+
+    /// Applies the given predicate to the coordinates of many points, and returns if both filled it.
+    ///
+    /// The function is applied to the x-coordinates first.
+    /// Equivalent to `Self::op_many(arguments, operator).all(|x| x)`.
+    pub fn op_all_many<'a, I, F>(arguments: I, operator: F) -> bool
+    where
+        T: Copy,
+        I: IntoIterator<Item = Point<T>>,
+        F: FnMut(&[T]) -> bool,
+    {
+        Self::op_many(arguments, operator).all(|x| x)
+    }
+
+    /// Applies the given predicate between the coordinates of two points and returns if either one filled it
+    ///
+    /// The function is applied to the x-coordinate first.
+    /// Equivalent to `self.op(other, predicate).any(|x| x)`.
+    pub fn op_any<U, F>(&self, other: &Point<U>, predicate: F) -> bool
+    where
+        U: Clone,
+        F: FnMut(&T, &U) -> bool,
+    {
+        self.op(other, predicate).any(|x| x)
+    }
+
+    /// Applies the given predicate to the coordinates of many points, and returns if either one filled it.
+    ///
+    /// The function is applied to the x-coordinates first.
+    /// Equivalent to `Self::op_many(arguments, operator).any(|x| x)`.
+    pub fn op_any_many<'a, I, F>(arguments: I, operator: F) -> bool
+    where
+        T: Copy,
+        I: IntoIterator<Item = Point<T>>,
+        F: FnMut(&[T]) -> bool,
+    {
+        Self::op_many(arguments, operator).any(|x| x)
+    }
+
     /// Returns the sum of x and y points.
     pub fn sum(&self) -> T {
         self.x.clone() + self.y.clone()
@@ -116,22 +224,16 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
 
     /// Returns the [taxicab/manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry) from the origin.
     ///
-    /// Same as `point.abs().sum()`
-    pub fn distance_taxi(&self) -> T
-    where
-        T: Signed,
-    {
-        self.abs().sum()
+    /// Same as `point.abs_generic().sum()`
+    pub fn distance_taxi(&self) -> T {
+        self.abs_generic().sum()
     }
 
     /// Returns the [Chebyshev/king's move distance](https://en.wikipedia.org/wiki/Chebyshev_distance) from the origin.
     ///
-    /// Same as `point.abs().max_coord()`.
-    pub fn distance_king(&self) -> T
-    where
-        T: Signed,
-    {
-        self.abs().max_coord()
+    /// Same as `point.abs_generic().max_coord()`.
+    pub fn distance_king(&self) -> T {
+        self.abs_generic().max_coord()
     }
 
     /// Returns the dot product with the given point/vector.
@@ -177,9 +279,33 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
     pub fn to_inside(&self, rect: &Rect<T>) -> Point<T> {
         let Rect { x1, y1, x2, y2 } = rect.clone();
         Point {
-            x: num_traits::clamp(self.x.clone(), x1, x2),
-            y: num_traits::clamp(self.y.clone(), y1, y2),
+            x: num::clamp(self.x.clone(), x1, x2),
+            y: num::clamp(self.y.clone(), y1, y2),
         }
+    }
+
+    /// Snaps this point to the nearest multiple of the given increment.
+    ///
+    /// Halfway cases are rounded down towards negative infinity.
+    ///
+    /// The increment's sign doesn't affect the result.
+    ///
+    /// # Panics
+    /// Panics if either of the increment's values are 0.
+    pub fn snap(&self, snap_increment: &Point<T>) -> Point<T>
+    where
+        T: Integer,
+    {
+        self.clone()
+            .op(&snap_increment.abs_generic(), |x, increment| {
+                let prev = x.prev_multiple_of(increment);
+                let next = x.next_multiple_of(increment);
+                if x.clone() - prev.clone() <= next.clone() - x.clone() {
+                    prev
+                } else {
+                    next
+                }
+            })
     }
 }
 
@@ -297,7 +423,7 @@ impl<T> From<Point<T>> for (T, T) {
 macro_rules! impl_ops {
     ($($trait:tt, $fun:ident, $trait_assign:tt, $fun_assign:ident;)*) => {$(
         impl<T: $trait> $trait for Point<T> {
-            type Output = Point<T::Output>;
+            type Output = Point<<T as $trait>::Output>;
             fn $fun(self, rhs: Point<T>) -> Self::Output {
                 Point::new(
                     <T as $trait>::$fun(self.x, rhs.x),
@@ -307,7 +433,7 @@ macro_rules! impl_ops {
         }
 
         impl<T: $trait + Clone> $trait for &Point<T> {
-            type Output = Point<T::Output>;
+            type Output = Point<<T as $trait>::Output>;
             fn $fun(self, rhs: &Point<T>) -> Self::Output {
                 Point::new(
                     <T as $trait>::$fun(self.x.clone(), rhs.x.clone()),
@@ -317,7 +443,7 @@ macro_rules! impl_ops {
         }
 
         impl<T: $trait + Clone> $trait::<&Point<T>> for Point<T> {
-            type Output = Point<T::Output>;
+            type Output = Point<<T as $trait>::Output>;
             fn $fun(self, rhs: &Point<T>) -> Self::Output {
                 Point::new(
                     <T as $trait>::$fun(self.x, rhs.x.clone()),
@@ -327,7 +453,7 @@ macro_rules! impl_ops {
         }
 
         impl<T: $trait + Clone> $trait::<Point<T>> for &Point<T> {
-            type Output = Point<T::Output>;
+            type Output = Point<<T as $trait>::Output>;
             fn $fun(self, rhs: Point<T>) -> Self::Output {
                 Point::new(
                     <T as $trait>::$fun(self.x.clone(), rhs.x),

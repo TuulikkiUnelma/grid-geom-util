@@ -58,6 +58,7 @@ impl fmt::Display for CardDir {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use itertools::Itertools;
     use std::collections::HashSet;
 
     fn test_points(min: i32, max: i32) -> impl Iterator<Item = Point<i32>> {
@@ -338,5 +339,60 @@ mod tests {
         assert_eq!(r4x4.shrink([0, 1]), f(0, 1, 3, 2));
         assert_eq!(r4x4.shrink([0, 2]), f(0, 1, 3, 1));
         assert_eq!(r4x4.shrink([0, 3]), f(0, 1, 3, 1));
+    }
+
+    #[test]
+    fn snap_points_unsigned() {
+        let point_range = |x1, x2, y1, y2| {
+            (y1..=y2)
+                .cartesian_product(x1..=x2)
+                .map(|(y, x)| Point { x, y })
+        };
+
+        for grid_incr in point_range(1u32, 10, 1, 10) {
+            for (grid_point, local_point) in point_range(0u32, 10, 0, 10)
+                .cartesian_product(point_range(0, grid_incr.x - 1, 0, grid_incr.y - 1))
+            {
+                let grid_point_pos = grid_point * grid_incr;
+                if Point::op_any_many([local_point, grid_point_pos, grid_incr], |slice| {
+                    if let [local, grid, incr] = *slice {
+                        grid == 0 && local < incr / 2
+                    } else {
+                        unreachable!()
+                    }
+                }) {
+                    // outside grid area, a local coordinate would be negative
+                    continue;
+                }
+                let local_point_pos = local_point + grid_point_pos - grid_incr.map(|x| (x - 1) / 2);
+                assert_eq!(grid_point_pos, local_point_pos.snap(&grid_incr));
+            }
+        }
+    }
+
+    #[test]
+    fn snap_points_signed() {
+        let point_range = |x1, x2, y1, y2| {
+            (y1..=y2)
+                .cartesian_product(x1..=x2)
+                .map(|(y, x)| Point { x, y })
+        };
+
+        for grid_incr in point_range(1, 10, 1, 10) {
+            let w = (grid_incr.x - 1) as f32;
+            let h = (grid_incr.y - 1) as f32;
+            let x_ext_neg = -((w / 2.0).floor() as i32);
+            let x_ext_pos = (w / 2.0).ceil() as i32;
+            let y_ext_neg = -((h / 2.0).floor() as i32);
+            let y_ext_pos = (h / 2.0).ceil() as i32;
+
+            for (grid_point, local_point) in point_range(-5, 5, -5, 5)
+                .cartesian_product(point_range(x_ext_neg, x_ext_pos, y_ext_neg, y_ext_pos))
+            {
+                let grid_point_pos = grid_point * grid_incr;
+                let local_point_pos = local_point + grid_point_pos;
+                assert_eq!(grid_point_pos, local_point_pos.snap(&grid_incr));
+            }
+        }
     }
 }
