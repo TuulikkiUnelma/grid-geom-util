@@ -38,11 +38,25 @@ impl<T> Line<T> {
         self.into()
     }
 
+    /// Converts self into a tuple of points.
+    ///
+    /// This is for when the type can't be inferred when using just [`Into::into`].
+    pub fn into_points(self) -> (Point<T>, Point<T>) {
+        (Point::new(self.x1, self.y1), Point::new(self.x2, self.y2))
+    }
+
     /// Converts self into an array.
     ///
     /// This is for when the type can't be inferred when using just [`Into::into`].
     pub fn into_array(self) -> [T; 4] {
         self.into()
+    }
+
+    /// Converts self into an array of points.
+    ///
+    /// This is for when the type can't be inferred when using just [`Into::into`].
+    pub fn into_points_array(self) -> [Point<T>; 2] {
+        [Point::new(self.x1, self.y1), Point::new(self.x2, self.y2)]
     }
 
     /// Returns true if the ending point has greater or equal x-coordinate than the beginning.
@@ -142,7 +156,7 @@ impl<T> Line<T> {
     }
 }
 
-impl<T: Clone + Num + PartialOrd> Line<T> {
+impl<T: Clone> Line<T> {
     /// Returns the first point `(x1, y1)`.
     pub fn begin(&self) -> Point<T> {
         [self.x1.clone(), self.y1.clone()].into()
@@ -154,14 +168,42 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
     }
 
     /// Returns the midpoint of this line.
-    pub fn mid(&self) -> Point<T> {
+    pub fn mid(&self) -> Point<T>
+    where
+        T: Num,
+    {
         let two = || T::one() + T::one();
         let two = || Point::new(two(), two());
         (self.begin() + self.end()) / two()
     }
 
+    /// Checks if both endpoints fulfill the given predicate function
+    ///
+    /// The predicate is short-circuiting and applied to the beginning point first.
+    #[must_use]
+    pub fn all<F>(&self, mut predicate: F) -> bool
+    where
+        F: FnMut(&Point<T>) -> bool,
+    {
+        predicate(&self.begin()) && predicate(&self.end())
+    }
+
+    /// Checks if either endpoint fulfills the given predicate function
+    ///
+    /// The predicate is short-circuiting and applied to the beginning point first.
+    #[must_use]
+    pub fn any<F>(&self, mut predicate: F) -> bool
+    where
+        F: FnMut(&Point<T>) -> bool,
+    {
+        predicate(&self.begin()) || predicate(&self.end())
+    }
+
     /// Returns `end - begin`.
-    pub fn vector(&self) -> Point<T> {
+    pub fn vector(&self) -> Point<T>
+    where
+        T: Num,
+    {
         self.end() - self.begin()
     }
 
@@ -174,7 +216,10 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
     /// Returns a line with the beginning point having the lesser x-coordinate.
     ///
     /// If the x coordinate of both points is the same, the line is returned unchanged.
-    pub fn sort_x(&self) -> Line<T> {
+    pub fn sort_x(&self) -> Line<T>
+    where
+        T: PartialOrd,
+    {
         if self.is_x_sorted() {
             self.clone()
         } else {
@@ -185,7 +230,10 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
     /// Returns a line with the beginning point having the lesser y-coordinate.
     ///
     /// If the y coordinate of both points is the same, the line is returned unchanged.
-    pub fn sort_y(&self) -> Line<T> {
+    pub fn sort_y(&self) -> Line<T>
+    where
+        T: PartialOrd,
+    {
         if self.is_y_sorted() {
             self.clone()
         } else {
@@ -202,7 +250,7 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
     /// If `t` is less than 0 or bigger than 1 then a point outside the line segment is returned.
     pub fn lerp(&self, t: f32) -> Point<f32>
     where
-        T: AsPrimitive<f32>,
+        T: AsPrimitive<f32> + Num,
     {
         let (x1, y1) = self.begin().into();
         let (dx, dy) = self.vector().into();
@@ -212,12 +260,62 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
         }
     }
 
+    /// Applies the given function to the start and end points of two lines.
+    ///
+    /// The function is applied to the start point first.
+    pub fn op<U, O, F>(&self, other: &Line<U>, mut operator: F) -> Line<O>
+    where
+        U: Clone,
+        F: FnMut(&Point<T>, &Point<U>) -> Point<O>,
+    {
+        Line::from_points(
+            operator(&self.begin(), &other.begin()),
+            operator(&self.end(), &other.end()),
+        )
+    }
+
+    /// Applies the given function to the start and endpoints of many lines.
+    ///
+    /// The function is applied to the start points first.
+    pub fn op_many<'a, I, O, F>(arguments: I, mut operator: F) -> Line<O>
+    where
+        T: Copy,
+        I: IntoIterator<Item = Line<T>>,
+        F: FnMut(&[Point<T>]) -> Point<O>,
+    {
+        let (begin_points, end_points): (Vec<_>, Vec<_>) =
+            arguments.into_iter().map(Line::into_points).unzip();
+        Line::from_points(operator(&begin_points[..]), operator(&end_points[..]))
+    }
+
+    /// Applies the given predicate between the endpoints of two lines and returns if both filled it
+    ///
+    /// The function is short-circuiting and applied to the start points first.
+    pub fn op_all<U, F>(&self, other: &Line<U>, mut predicate: F) -> bool
+    where
+        U: Clone,
+        F: FnMut(&Point<T>, &Point<U>) -> bool,
+    {
+        predicate(&self.begin(), &other.begin()) && predicate(&self.end(), &other.end())
+    }
+
+    /// Applies the given predicate between the endpoints of two lines and returns if either one filled it
+    ///
+    /// The function is applied to the x-coordinate first.
+    pub fn op_any<U, F>(&self, other: &Line<U>, mut predicate: F) -> bool
+    where
+        U: Clone,
+        F: FnMut(&Point<T>, &Point<U>) -> bool,
+    {
+        predicate(&self.begin(), &other.begin()) || predicate(&self.end(), &other.end())
+    }
+
     /// Returns the length of this line in the euclid space.
     ///
     /// Same as `line.vector().distance_euclid()`.
     pub fn length_euclid(&self) -> f32
     where
-        T: AsPrimitive<f32>,
+        T: AsPrimitive<f32> + Num,
     {
         self.vector().distance_euclid()
     }
@@ -225,21 +323,30 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
     /// Returns the [taxicab/manhattan length](https://en.wikipedia.org/wiki/Taxicab_geometry) of this line.
     ///
     /// Same as [`line.vector().distance_taxi()`](Point::distance_taxi).
-    pub fn length_taxi(&self) -> T {
+    pub fn length_taxi(&self) -> T
+    where
+        T: Num + PartialOrd,
+    {
         self.vector().distance_taxi()
     }
 
     /// Returns the [Chebyshev/king's move length](https://en.wikipedia.org/wiki/Chebyshev_distance) of this line.
     ///
     /// Same as [`line.vector().distance_king()`](Point::distance_king).
-    pub fn length_king(&self) -> T {
+    pub fn length_king(&self) -> T
+    where
+        T: Num + PartialOrd,
+    {
         self.vector().distance_king()
     }
 
     /// Returns the bounding rectangle of this line.
     ///
     /// Same as `(self.begin(), self.end()).into()`.
-    pub fn rect(&self) -> Rect<T> {
+    pub fn rect(&self) -> Rect<T>
+    where
+        T: PartialOrd,
+    {
         Rect::from_corners(self.begin(), self.end())
     }
 
@@ -263,7 +370,7 @@ impl<T: Clone + Num + PartialOrd> Line<T> {
     /// The returned points will be on a (1,1)-grid and the returned order will be arbitrary.
     pub fn bresenham_iter(&self) -> BresenhamIter<T>
     where
-        T: Signed,
+        T: Signed + PartialOrd,
     {
         let Line { x1, y1, x2, y2 } = {
             let Line { x1, y1, x2, y2 } = self.clone();

@@ -80,38 +80,44 @@ impl<T> Point<T> {
             y: f(self.y),
         }
     }
+}
 
+impl<T: Clone> Point<T> {
     /// Checks if both values fulfill the given predicate function
     ///
     /// The predicate is short-circuiting and applied to the x-coordinate first.
     #[must_use]
-    pub fn all<F>(self, mut predicate: F) -> bool
+    pub fn all<F>(&self, mut predicate: F) -> bool
     where
-        F: FnMut(T) -> bool,
+        F: FnMut(&T) -> bool,
     {
-        predicate(self.x) && predicate(self.y)
+        predicate(&self.x) && predicate(&self.y)
     }
 
-    /// Checks if either value fulfill the given predicate function
+    /// Checks if either value fulfills the given predicate function
     ///
     /// The predicate is short-circuiting and applied to the x-coordinate first.
     #[must_use]
-    pub fn any<F>(self, mut predicate: F) -> bool
+    pub fn any<F>(&self, mut predicate: F) -> bool
     where
-        F: FnMut(T) -> bool,
+        F: FnMut(&T) -> bool,
     {
-        predicate(self.x) || predicate(self.y)
+        predicate(&self.x) || predicate(&self.y)
     }
-}
 
-impl<T: Clone + Num + PartialOrd> Point<T> {
     /// Returns the coordinate which is smaller.
-    pub fn min_coord(&self) -> T {
+    pub fn min_coord(&self) -> T
+    where
+        T: PartialOrd,
+    {
         min(self.x.clone(), self.y.clone())
     }
 
     /// Returns the coordinate which is greater.
-    pub fn max_coord(&self) -> T {
+    pub fn max_coord(&self) -> T
+    where
+        T: PartialOrd,
+    {
         max(self.x.clone(), self.y.clone())
     }
 
@@ -127,7 +133,10 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
     ///
     /// Does not use the standard `abs` implementation.
     /// Can be used for unsigned values as well, although it has no effect.
-    pub fn abs_generic(&self) -> Self {
+    pub fn abs_generic(&self) -> Self
+    where
+        T: Num + PartialOrd,
+    {
         let abs = |x: T| if x < T::zero() { T::zero() - x } else { x };
         Point::new(abs(self.x.clone()), abs(self.y.clone()))
     }
@@ -160,55 +169,58 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
     /// Applies the given predicate between the coordinates of two points and returns if both filled it
     ///
     /// The function is applied to the x-coordinate first.
-    /// Equivalent to `self.op(other, predicate).all(|x| x)`.
+    /// Equivalent to `self.op(other, predicate).all(|x| *x)`.
     pub fn op_all<U, F>(&self, other: &Point<U>, predicate: F) -> bool
     where
         U: Clone,
         F: FnMut(&T, &U) -> bool,
     {
-        self.op(other, predicate).all(|x| x)
+        self.op(other, predicate).all(|x| *x)
     }
 
     /// Applies the given predicate to the coordinates of many points, and returns if both filled it.
     ///
     /// The function is applied to the x-coordinates first.
-    /// Equivalent to `Self::op_many(arguments, operator).all(|x| x)`.
+    /// Equivalent to `Self::op_many(arguments, operator).all(|x| *x)`.
     pub fn op_all_many<'a, I, F>(arguments: I, operator: F) -> bool
     where
         T: Copy,
         I: IntoIterator<Item = Point<T>>,
         F: FnMut(&[T]) -> bool,
     {
-        Self::op_many(arguments, operator).all(|x| x)
+        Self::op_many(arguments, operator).all(|x| *x)
     }
 
     /// Applies the given predicate between the coordinates of two points and returns if either one filled it
     ///
     /// The function is applied to the x-coordinate first.
-    /// Equivalent to `self.op(other, predicate).any(|x| x)`.
+    /// Equivalent to `self.op(other, predicate).any(|x| *x)`.
     pub fn op_any<U, F>(&self, other: &Point<U>, predicate: F) -> bool
     where
         U: Clone,
         F: FnMut(&T, &U) -> bool,
     {
-        self.op(other, predicate).any(|x| x)
+        self.op(other, predicate).any(|x| *x)
     }
 
     /// Applies the given predicate to the coordinates of many points, and returns if either one filled it.
     ///
     /// The function is applied to the x-coordinates first.
-    /// Equivalent to `Self::op_many(arguments, operator).any(|x| x)`.
+    /// Equivalent to `Self::op_many(arguments, operator).any(|x| *x)`.
     pub fn op_any_many<'a, I, F>(arguments: I, operator: F) -> bool
     where
         T: Copy,
         I: IntoIterator<Item = Point<T>>,
         F: FnMut(&[T]) -> bool,
     {
-        Self::op_many(arguments, operator).any(|x| x)
+        Self::op_many(arguments, operator).any(|x| *x)
     }
 
     /// Returns the sum of x and y points.
-    pub fn sum(&self) -> T {
+    pub fn sum(&self) -> T
+    where
+        T: Num,
+    {
         self.x.clone() + self.y.clone()
     }
 
@@ -225,21 +237,30 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
     /// Returns the [taxicab/manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry) from the origin.
     ///
     /// Same as `point.abs_generic().sum()`
-    pub fn distance_taxi(&self) -> T {
+    pub fn distance_taxi(&self) -> T
+    where
+        T: Num + PartialOrd,
+    {
         self.abs_generic().sum()
     }
 
     /// Returns the [Chebyshev/king's move distance](https://en.wikipedia.org/wiki/Chebyshev_distance) from the origin.
     ///
     /// Same as `point.abs_generic().max_coord()`.
-    pub fn distance_king(&self) -> T {
+    pub fn distance_king(&self) -> T
+    where
+        T: Num + PartialOrd,
+    {
         self.abs_generic().max_coord()
     }
 
     /// Returns the dot product with the given point/vector.
     ///
     /// Same as `(a * b).sum()`.
-    pub fn dot(&self, other: &Self) -> T {
+    pub fn dot(&self, other: &Self) -> T
+    where
+        T: Num,
+    {
         (self * other).sum()
     }
 
@@ -255,7 +276,7 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
     /// If the length is 0, returns [`CardDir::North`].
     pub fn cardinal(&self) -> CardDir
     where
-        T: Signed,
+        T: Signed + PartialOrd,
     {
         if self.x.abs() > self.y.abs() {
             if self.x.is_positive() {
@@ -271,12 +292,18 @@ impl<T: Clone + Num + PartialOrd> Point<T> {
     }
 
     /// Returns true if this point is inside the given rectangle.
-    pub fn is_inside(&self, rect: &Rect<T>) -> bool {
+    pub fn is_inside(&self, rect: &Rect<T>) -> bool
+    where
+        T: PartialOrd,
+    {
         self.x >= rect.x1 && self.x <= rect.x2 && self.y >= rect.y1 && self.y <= rect.y2
     }
 
     /// Moves this point to inside the given rectangle.
-    pub fn to_inside(&self, rect: &Rect<T>) -> Point<T> {
+    pub fn to_inside(&self, rect: &Rect<T>) -> Point<T>
+    where
+        T: PartialOrd,
+    {
         let Rect { x1, y1, x2, y2 } = rect.clone();
         Point {
             x: num::clamp(self.x.clone(), x1, x2),
