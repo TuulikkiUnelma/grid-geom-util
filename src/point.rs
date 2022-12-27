@@ -1,6 +1,7 @@
 use crate::{max, min, CardDir, Rect};
 
-use num::{traits::AsPrimitive, Integer, Num, Signed};
+use num::Float;
+use num::{Integer, Num, Signed};
 use serde::{Deserialize, Serialize};
 
 use std::fmt;
@@ -155,7 +156,7 @@ impl<T: Clone> Point<T> {
     /// Applies the given function to the coordinates of many points.
     ///
     /// The function is applied to the x-coordinates first.
-    pub fn op_many<'a, I, O, F>(arguments: I, mut operator: F) -> Point<O>
+    pub fn op_many<I, O, F>(arguments: I, mut operator: F) -> Point<O>
     where
         T: Copy,
         I: IntoIterator<Item = Point<T>>,
@@ -182,7 +183,7 @@ impl<T: Clone> Point<T> {
     ///
     /// The function is applied to the x-coordinates first.
     /// Equivalent to `Self::op_many(arguments, operator).all(|x| *x)`.
-    pub fn op_all_many<'a, I, F>(arguments: I, operator: F) -> bool
+    pub fn op_all_many<I, F>(arguments: I, operator: F) -> bool
     where
         T: Copy,
         I: IntoIterator<Item = Point<T>>,
@@ -207,7 +208,7 @@ impl<T: Clone> Point<T> {
     ///
     /// The function is applied to the x-coordinates first.
     /// Equivalent to `Self::op_many(arguments, operator).any(|x| *x)`.
-    pub fn op_any_many<'a, I, F>(arguments: I, operator: F) -> bool
+    pub fn op_any_many<I, F>(arguments: I, operator: F) -> bool
     where
         T: Copy,
         I: IntoIterator<Item = Point<T>>,
@@ -225,13 +226,11 @@ impl<T: Clone> Point<T> {
     }
 
     /// Returns the point's distance from the origin in the usual euclid space.
-    pub fn distance_euclid(&self) -> f32
+    pub fn distance_euclid(&self) -> T
     where
-        T: AsPrimitive<f32>,
+        T: Float,
     {
-        let x = self.x.as_();
-        let y = self.y.as_();
-        (x * x + y * y).sqrt()
+        (self.x.powi(2) + self.y.powi(2)).sqrt()
     }
 
     /// Returns the [taxicab/manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry) from the origin.

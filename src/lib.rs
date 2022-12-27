@@ -1,9 +1,11 @@
 #![doc = include_str!("../README.md")]
 
+mod circle;
 mod line;
 mod point;
 mod rect;
 
+pub use circle::*;
 pub use line::*;
 pub use point::*;
 pub use rect::*;
@@ -83,7 +85,7 @@ mod tests {
         for p in test_points(-500, 500) {
             let (x, y) = p.into();
 
-            let euclid = p.distance_euclid();
+            let euclid = p.map(|x| x as f32).distance_euclid();
             let taxi = p.distance_taxi();
             let king = p.distance_king();
 
@@ -392,6 +394,44 @@ mod tests {
                 let grid_point_pos = grid_point * grid_incr;
                 let local_point_pos = local_point + grid_point_pos;
                 assert_eq!(grid_point_pos, local_point_pos.snap(&grid_incr));
+            }
+        }
+    }
+
+    #[test]
+    fn circle_bresenham_zero_radius() {
+        let mut it = Circle::new(5, -4, 0).bresenham_iter();
+        assert_eq!(it.next(), Some(Point { x: 5, y: -4 }));
+        assert_eq!(it.next(), None);
+    }
+
+    #[test]
+    fn circle_bresenham_one_radius() {
+        let mut it = Circle::new(5, -4, 1).bresenham_iter();
+        assert_eq!(it.next(), Some(Point { x: 6, y: -4 }));
+        assert_eq!(it.next(), Some(Point { x: 5, y: -3 }));
+        assert_eq!(it.next(), Some(Point { x: 4, y: -4 }));
+        assert_eq!(it.next(), Some(Point { x: 5, y: -5 }));
+        assert_eq!(it.next(), None);
+    }
+
+    #[test]
+    fn circle_bresenham() {
+        for r in 2..=10 {
+            let circle_int = Circle::new(0, 0, r);
+            let circle_f = Circle::new(0.0, 0.0, r as f32);
+            let ring_int = circle_int.bresenham_iter();
+            let ring_f = circle_f.bresenham_iter();
+
+            assert!(ring_int.clone().all_unique());
+
+            for (p_int, p_f) in ring_int.zip(ring_f) {
+                assert_eq!(p_int.map(|x| x as f32), p_f);
+
+                // check that it's the closest approximation to a point in the circle
+                let actual_distance = p_f.distance_euclid();
+                let error = (actual_distance - r as f32).abs();
+                assert!(error < 1.0);
             }
         }
     }

@@ -1,6 +1,6 @@
 use crate::{Point, Rect};
 
-use num::{traits::AsPrimitive, Integer, Num, One, Signed, Zero};
+use num::{traits::AsPrimitive, Float, Integer, Num, One, Signed, Zero};
 use serde::{Deserialize, Serialize};
 use std::{fmt, iter::FusedIterator};
 
@@ -277,7 +277,7 @@ impl<T: Clone> Line<T> {
     /// Applies the given function to the start and endpoints of many lines.
     ///
     /// The function is applied to the start points first.
-    pub fn op_many<'a, I, O, F>(arguments: I, mut operator: F) -> Line<O>
+    pub fn op_many<I, O, F>(arguments: I, mut operator: F) -> Line<O>
     where
         T: Copy,
         I: IntoIterator<Item = Line<T>>,
@@ -313,9 +313,9 @@ impl<T: Clone> Line<T> {
     /// Returns the length of this line in the euclid space.
     ///
     /// Same as `line.vector().distance_euclid()`.
-    pub fn length_euclid(&self) -> f32
+    pub fn length_euclid(&self) -> T
     where
-        T: AsPrimitive<f32> + Num,
+        T: Float,
     {
         self.vector().distance_euclid()
     }
@@ -367,7 +367,7 @@ impl<T: Clone> Line<T> {
 
     /// Returns an iterator over the points in this line using the Bresenham algorithm.
     ///
-    /// The returned points will be on a (1,1)-grid and the returned order will be arbitrary.
+    /// The returned points will be calculated by using integer arithmetic and the returned order will be arbitrary.
     pub fn bresenham_iter(&self) -> BresenhamIter<T>
     where
         T: Signed + PartialOrd,
@@ -411,7 +411,7 @@ impl<T: Clone> Line<T> {
 
 /// An iterator returning a line's points according to the Bresenham algorithm.
 ///
-/// Created with [`Line::bresenham`].
+/// Created with [`Line::bresenham_iter`].
 #[derive(Debug, Clone, Copy)]
 pub struct BresenhamIter<T> {
     u_is_x: bool,
