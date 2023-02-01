@@ -44,7 +44,7 @@ impl<T> Point<T> {
         self.into()
     }
 
-    /// Maps a function to the both of the coordinates and returns them as a new point.
+    /// Maps the same function to the both of the coordinates and returns them as a new point.
     ///
     /// The function will be applied to the x-coordinate first.
     #[must_use]

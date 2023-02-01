@@ -435,4 +435,62 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn filled_circle_bresenham_zero_radius() {
+        let mut it = Circle::new(5, -4, 0).bresenham_filled_iter();
+        assert_eq!(it.next(), Some(Point { x: 5, y: -4 }));
+        assert_eq!(it.next(), None);
+    }
+
+    #[test]
+    fn filled_circle_bresenham_one_radius() {
+        let mut it = Circle::new(5, -4, 1).bresenham_filled_iter();
+        assert_eq!(it.next(), Some(Point { x: 5, y: -5 }));
+        assert_eq!(it.next(), Some(Point { x: 4, y: -4 }));
+        assert_eq!(it.next(), Some(Point { x: 5, y: -4 }));
+        assert_eq!(it.next(), Some(Point { x: 6, y: -4 }));
+        assert_eq!(it.next(), Some(Point { x: 5, y: -3 }));
+        assert_eq!(it.next(), None);
+    }
+
+    #[test]
+    fn filled_circle_bresenham() {
+        for r in 2i32..=10 {
+            let circle_int = Circle::new(0, 0, r);
+            let circle_f = Circle::new(0.0, 0.0, r as f32);
+            let points_int = circle_int.bresenham_iter();
+            let points_f = circle_f.bresenham_iter();
+
+            let v = points_int.clone().collect_vec();
+            let row_len = r * 2 + 1 + 2;
+            let mut grid = vec![b'.'; (row_len as usize).pow(2)];
+            for Point { x, y } in &v {
+                let row = (x + row_len / 2) as usize;
+                let col = (y + row_len / 2) as usize;
+                match &mut grid[row + col * row_len as usize] {
+                    r @ b'.' => *r = b'#',
+                    r @ b'#' => *r = b'%',
+                    r @ b'%' => *r = b'&',
+                    r => *r = b'?',
+                }
+            }
+            for row in grid.chunks(row_len as usize) {
+                for b in row {
+                    print!("{}", *b as char)
+                }
+                println!()
+            }
+
+            //assert!(points_int.clone().all_unique());
+
+            for (p_int, p_f) in points_int.zip(points_f) {
+                assert_eq!(p_int.map(|x| x as f32), p_f);
+
+                // check that it's inside the circle
+                //assert!(circle_int.is_inside(&p_int));
+                //assert!(circle_f.is_inside(&p_f));
+            }
+        }
+    }
 }
