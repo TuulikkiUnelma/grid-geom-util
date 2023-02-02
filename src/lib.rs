@@ -419,17 +419,13 @@ mod tests {
     fn circle_bresenham() {
         for r in 2..=10 {
             let circle_int = Circle::new(0, 0, r);
-            let circle_f = Circle::new(0.0, 0.0, r as f32);
-            let ring_int = circle_int.bresenham_iter();
-            let ring_f = circle_f.bresenham_iter();
+            let ring = circle_int.bresenham_iter();
 
-            assert!(ring_int.clone().all_unique());
+            assert!(ring.clone().all_unique());
 
-            for (p_int, p_f) in ring_int.zip(ring_f) {
-                assert_eq!(p_int.map(|x| x as f32), p_f);
-
+            for pos in ring {
                 // check that it's the closest approximation to a point in the circle
-                let actual_distance = p_f.distance_euclid();
+                let actual_distance = pos.map(|x| x as f32).distance_euclid();
                 let error = (actual_distance - r as f32).abs();
                 assert!(error < 1.0);
             }
@@ -458,11 +454,9 @@ mod tests {
     fn filled_circle_bresenham() {
         for r in 2i32..=10 {
             let circle_int = Circle::new(0, 0, r);
-            let circle_f = Circle::new(0.0, 0.0, r as f32);
-            let points_int = circle_int.bresenham_iter();
-            let points_f = circle_f.bresenham_iter();
+            let points = circle_int.bresenham_iter();
 
-            let v = points_int.clone().collect_vec();
+            let v = points.clone().collect_vec();
             let row_len = r * 2 + 1 + 2;
             let mut grid = vec![b'.'; (row_len as usize).pow(2)];
             for Point { x, y } in &v {
@@ -482,10 +476,9 @@ mod tests {
                 println!()
             }
 
-            //assert!(points_int.clone().all_unique());
+            //assert!(points.clone().all_unique());
 
-            for (p_int, p_f) in points_int.zip(points_f) {
-                assert_eq!(p_int.map(|x| x as f32), p_f);
+            for pos in points {
 
                 // check that it's inside the circle
                 //assert!(circle_int.is_inside(&p_int));
