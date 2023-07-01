@@ -19,7 +19,7 @@ pub struct Circle<T> {
 
 impl<T> Circle<T> {
     /// Creates a new circle
-    pub fn new(x: T, y: T, r: T) -> Self {
+    pub const fn new(x: T, y: T, r: T) -> Self {
         Self { x, y, r }
     }
 

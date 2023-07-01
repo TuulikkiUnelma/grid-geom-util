@@ -26,7 +26,7 @@ pub struct Point<T> {
 
 impl<T> Point<T> {
     /// Creates a new point.
-    pub fn new(x: T, y: T) -> Self {
+    pub const fn new(x: T, y: T) -> Self {
         Self { x, y }
     }
 

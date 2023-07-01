@@ -22,7 +22,7 @@ pub struct Line<T> {
 
 impl<T> Line<T> {
     /// Creates a new line segment.
-    pub fn new(x1: T, y1: T, x2: T, y2: T) -> Self {
+    pub const fn new(x1: T, y1: T, x2: T, y2: T) -> Self {
         Self { x1, y1, x2, y2 }
     }
 
