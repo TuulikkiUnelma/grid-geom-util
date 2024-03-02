@@ -338,7 +338,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// Returns a rectangle that's big enough to contain both of the rectangles.
     ///
     /// If one rectangle is inside the other (or they're the same), then it returns the larger rectangle.
-    pub fn bounding_box<P: Into<Point<T>>>(&self, other: &Self) -> Self {
+    pub fn bounding_box(&self, other: &Self) -> Self {
         let a = self.clone();
         let b = other.clone();
         Rect {
