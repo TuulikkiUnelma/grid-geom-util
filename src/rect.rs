@@ -321,6 +321,20 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         )
     }
 
+    /// Grows this rectangle so that it includes the given point inside it.
+    ///
+    /// If the point is outside, then it coincides with one of the rectangle's borders
+    pub fn grow_to_include<P: Into<Point<T>>>(&self, point: P) -> Rect<T> {
+        let Rect { x1, y1, x2, y2 } = self.clone();
+        let p = point.into();
+        Rect {
+            x1: min(x1, p.x.clone()),
+            y1: min(y1, p.y.clone()),
+            x2: max(x2, p.x),
+            y2: max(y2, p.y),
+        }
+    }
+
     /// Returns true if this rectangle fits within the given `larger` rectangle.
     ///
     /// Sharing borders (eg. both x1 values are the same) counts as being inside.
@@ -331,7 +345,10 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
 
     /// Returns a new rectangle that's the same shape but moved to fit inside the given `larger` rectangle.
     ///
-    /// Returns `None` if this rectangle is wider or taller than the `larger` and therefore would not fit.
+    /// The rectangle is snapped to the edge that it was closest to if it was outside, and they will be sharing borders.
+    /// A rectangle that was inside already is not affected.
+    ///
+    /// Returns `None` if this rectangle is wider or taller than the `larger`, and therefore wouldn't fit.
     pub fn to_inside(&self, larger: &Self) -> Option<Self> {
         if self.width() > larger.width() || self.height() > larger.height() {
             return None;
@@ -409,7 +426,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     ///
     /// The returned rectangles will share borders.
     ///
-    /// For example if this rectangle goes from `x1 = 0` to `x2 = 10`, and you split it to 2 columns,
+    /// For example if this rectangle goes from `x1 = 0` to `x2 = 10` and you split it to 2 columns,
     /// you will get rectangles that go from `x1 = 0` to `x2 = 5` and from `x1 = 5` to `x2 = 10`.
     pub fn split(&self, cols: T, rows: T) -> Vec<Self>
     where
@@ -446,6 +463,10 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// They are returned in the increasing order of coordinates, with the top row first.
     ///
     /// The returned rectangles will share borders.
+    ///
+    /// For example if this rectangle goes from `x1 = 0` to `x2 = 10` and you split it from the middle,
+    /// you will get rectangles that go from `x1 = 0` to `x2 = 5` and from `x1 = 5` to `x2 = 10`.
+    /// Likewise with the y-coordinates.
     pub fn split_quad(&self, splitting_point: Point<T>) -> Option<[Self; 4]> {
         if !splitting_point.is_inside(self) {
             return None;
@@ -470,6 +491,9 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// The one with smaller coordinates is returned first.
     ///
     /// The returned rectangles will share borders.
+    ///
+    /// For example if this rectangle goes from `x1 = 0` to `x2 = 10` and you split it from the middle,
+    /// you will get rectangles that go from `x1 = 0` to `x2 = 5` and from `x1 = 5` to `x2 = 10`.
     pub fn split_x(&self, split_x: T) -> Option<[Self; 2]> {
         let Rect { x1, y1, x2, y2 } = self.clone();
         let px = split_x;
@@ -493,6 +517,9 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// The one with smaller coordinates is returned first.
     ///
     /// The returned rectangles will share borders.
+    ///
+    /// For example if this rectangle goes from `y1 = 0` to `y2 = 10` and you split it from the middle,
+    /// you will get rectangles that go from `y1 = 0` to `y2 = 5` and from `y1 = 5` to `y2 = 10`.
     pub fn split_y(&self, split_y: T) -> Option<[Self; 2]> {
         let Rect { x1, y1, x2, y2 } = self.clone();
         let py = split_y;

@@ -343,6 +343,11 @@ mod tests {
         assert_eq!(r4x4.shrink([0, 3]), f(0, 1, 3, 1));
     }
 
+    // TODO
+    /*#[test]
+    fn rect_grow_to_include(){
+    }*/
+
     #[test]
     fn snap_points_unsigned() {
         let point_range = |x1, x2, y1, y2| {
@@ -478,7 +483,7 @@ mod tests {
 
             //assert!(points.clone().all_unique());
 
-            for pos in points {
+            for _pos in points {
 
                 // check that it's inside the circle
                 //assert!(circle_int.is_inside(&p_int));
