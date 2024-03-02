@@ -335,6 +335,20 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
         }
     }
 
+    /// Returns a rectangle that's big enough to contain both of the rectangles.
+    ///
+    /// If one rectangle is inside the other (or they're the same), then it returns the larger rectangle.
+    pub fn bounding_box<P: Into<Point<T>>>(&self, other: &Self) -> Self {
+        let a = self.clone();
+        let b = other.clone();
+        Rect {
+            x1: min(a.x1, b.x1),
+            y1: min(a.y1, b.y1),
+            x2: max(a.x2, b.x2),
+            y2: max(a.y2, b.y2),
+        }
+    }
+
     /// Returns true if this rectangle fits within the given `larger` rectangle.
     ///
     /// Sharing borders (eg. both x1 values are the same) counts as being inside.

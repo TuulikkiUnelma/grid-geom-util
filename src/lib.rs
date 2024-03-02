@@ -348,6 +348,11 @@ mod tests {
     fn rect_grow_to_include(){
     }*/
 
+    // TODO
+    /*#[test]
+    fn rect_bounding_box(){
+    }*/
+
     #[test]
     fn snap_points_unsigned() {
         let point_range = |x1, x2, y1, y2| {
