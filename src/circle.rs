@@ -4,7 +4,7 @@ use num::{Integer, Num, Signed};
 use serde::{Deserialize, Serialize};
 use std::{fmt, iter::FusedIterator};
 
-/// A generic circle centered around the point `(x, y)` with the radius `r`.
+/// WIP. A circle centered around the point `(x, y)` with the radius `r`.
 ///
 /// If the radius is negative, then many of the methods might panic or return nonsensical answers.
 /// Not all methods might check for this.
@@ -18,12 +18,12 @@ pub struct Circle<T> {
 }
 
 impl<T> Circle<T> {
-    /// Creates a new circle
+    /// Creates a new circle.
     pub const fn new(x: T, y: T, r: T) -> Self {
         Self { x, y, r }
     }
 
-    /// Maps the given function to this circle's center and returns a new circle
+    /// Maps the given function to this circle's center and returns a new circle.
     pub fn map_xy<F>(self, mut f: F) -> Self
     where
         F: FnMut(Point<T>) -> Point<T>,
@@ -32,7 +32,7 @@ impl<T> Circle<T> {
         Self { x, y, r: self.r }
     }
 
-    /// Maps the given function to this circle's radius and returns a new circle
+    /// Maps the given function to this circle's radius and returns a new circle.
     pub fn map_r<F>(self, mut f: F) -> Self
     where
         F: FnMut(T) -> T,
@@ -44,7 +44,7 @@ impl<T> Circle<T> {
         }
     }
 
-    /// Maps the given function to this circle's position and radius and returns a new circle
+    /// Maps the given function to this circle's position and radius and returns a new circle.
     ///
     /// The function is applied first to the x-coordinate, then to the y-coordinate, and last
     /// to the radius.
@@ -60,7 +60,7 @@ impl<T> Circle<T> {
     }
 }
 impl<T: Clone> Circle<T> {
-    /// Returns the center point of this circle as a `Point`
+    /// Returns the center point of this circle as a `Point`.
     pub fn center(&self) -> Point<T> {
         Point {
             x: self.x.clone(),
@@ -68,7 +68,7 @@ impl<T: Clone> Circle<T> {
         }
     }
 
-    /// Returns true if the given point is inside this circle
+    /// Returns true if the given point is inside this circle.
     ///
     /// Is true if the euclidean distance of the given point from the circle's center
     /// is less than or equal to the circle's radius, plus 1.
@@ -80,7 +80,7 @@ impl<T: Clone> Circle<T> {
         v.dot(&v) <= self.r.clone() * self.r.clone() + T::one()
     }
 
-    /// Returns an iterator over the points of the circle's ring using integer arithmetic
+    /// Returns an iterator over the points of the circle's ring using integer arithmetic.
     ///
     /// The iterator returns the point `(radius, 0)` first, and then proceeds to return the
     /// rest of the points in the counter-clockwise order, if y-coordinate is up.
@@ -102,9 +102,9 @@ impl<T: Clone> Circle<T> {
         }
     }
 
-    /// Returns an iterator over the points of the filled circle using integer arithmetic
+    /// Returns an iterator over the points of the filled circle using integer arithmetic.
     ///
-    /// The iterator returns the points in the order of increasing coordinates
+    /// The iterator returns the points in the order of increasing coordinates.
     ///
     /// If the radius is 0, then the resulting iterator will return just the circle's center.
     /// Radius 1 circle is a 3x3 "plus sign".
@@ -130,7 +130,7 @@ impl<T: Clone> Circle<T> {
         }
     }
 
-    /// The actual bresenham algorithm is performed here beforehand
+    /// the actual bresenham algorithm is performed here, before iteration
     fn bresenham_arc(&self, fill_mode: bool) -> Vec<Point<T>>
     where
         T: Num + PartialOrd + Signed + Integer,
@@ -177,7 +177,7 @@ impl<T: Clone> Circle<T> {
     }
 }
 
-/// An iterator returning the circle's points according to the Bresenham's circle algorithm
+/// An iterator returning a circle's points according to the Bresenham's circle algorithm.
 ///
 /// Created by [`Circle::bresenham_iter`].
 #[derive(Debug, Clone)]
@@ -273,7 +273,7 @@ impl<T> ExactSizeIterator for BresenhamCircleIter<T> where
 {
 }
 
-/// An iterator returning the filled circle's points according to the Bresenham's circle algorithm
+/// An iterator returning a filled circle's points according to the Bresenham's circle algorithm.
 ///
 /// Created by [`Circle::bresenham_filled_iter`].
 #[derive(Debug, Clone)]

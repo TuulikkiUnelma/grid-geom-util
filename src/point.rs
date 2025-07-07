@@ -1,4 +1,4 @@
-use crate::{max, min, CardDir, Rect};
+use crate::{CardDir, Rect, max, min};
 
 use num::Float;
 use num::{Integer, Num, Signed};
@@ -235,7 +235,7 @@ impl<T: Clone> Point<T> {
 
     /// Returns the [taxicab/manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry) from the origin.
     ///
-    /// Same as `point.abs_generic().sum()`
+    /// Equivalent to `point.abs_generic().sum()`
     pub fn distance_taxi(&self) -> T
     where
         T: Num + PartialOrd,
@@ -245,7 +245,7 @@ impl<T: Clone> Point<T> {
 
     /// Returns the [Chebyshev/king's move distance](https://en.wikipedia.org/wiki/Chebyshev_distance) from the origin.
     ///
-    /// Same as `point.abs_generic().max_coord()`.
+    /// Equivalent to `point.abs_generic().max_coord()`.
     pub fn distance_king(&self) -> T
     where
         T: Num + PartialOrd,
@@ -255,7 +255,7 @@ impl<T: Clone> Point<T> {
 
     /// Returns the dot product with the given point/vector.
     ///
-    /// Same as `(a * b).sum()`.
+    /// Equivalent to `(a * b).sum()`.
     pub fn dot(&self, other: &Self) -> T
     where
         T: Num,
@@ -340,7 +340,8 @@ impl<T: Clone + Num> Point<T> {
     /// of this point.
     pub fn neighbors_neumann_iter(
         &self,
-    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator + use<T> {
+    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator + use<T>
+    {
         let one = T::one;
         let Point { x, y } = self;
         let x = || x.clone();
@@ -362,7 +363,8 @@ impl<T: Clone + Num> Point<T> {
     /// The 4 orthogonal (Von Neumann) neighbors are returned first.
     pub fn neighbors_moore_iter(
         &self,
-    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator + use<T> {
+    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator + use<T>
+    {
         let one = T::one;
         let Point { x, y } = self;
         let x = || x.clone();
@@ -385,7 +387,8 @@ impl<T: Clone + Num> Point<T> {
     /// Returns an iterator over the diagonal neighbors of this point.
     pub fn neighbors_diagonal_iter(
         &self,
-    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator + use<T> {
+    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator + use<T>
+    {
         let one = T::one;
         let Point { x, y } = self;
         let x = || x.clone();

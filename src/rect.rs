@@ -1,7 +1,7 @@
-use crate::{max, min, Line, Point};
+use crate::{Line, Point, max, min};
 
 use num::Integer;
-use num::{traits::AsPrimitive, Num};
+use num::{Num, traits::AsPrimitive};
 use serde::{Deserialize, Serialize};
 
 use std::fmt;
@@ -162,14 +162,14 @@ impl<T> Rect<T> {
 impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// Creates a new rectangle from the given minimum point and dimensions.
     ///
-    /// Same as `rect.from_diff(min_point, [width - 1, height - 1])`.
+    /// Equivalent to `rect.from_diff(min_point, [width - 1, height - 1])`.
     pub fn from_dim<P: Into<Point<T>>>(min_point: P, [width, height]: [T; 2]) -> Self {
         Self::from_diff(min_point, [width - T::one(), height - T::one()])
     }
 
     /// Creates a new rectangle from the given minimum point and differences.
     ///
-    /// Same as `rect.from_dim(min_point, [dx + 1, dy + 1])`.
+    /// Equivalent to `rect.from_dim(min_point, [dx + 1, dy + 1])`.
     pub fn from_diff<P: Into<Point<T>>>(min_point: P, [dx, dy]: [T; 2]) -> Self {
         let Point { x, y } = min_point.into();
         Self::new(x.clone(), y.clone(), x + dx, y + dy)
@@ -201,14 +201,14 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
 
     /// Returns the difference of the x-coordinate of the rectangle, which is `x2 - x1`.
     ///
-    /// Same as `width - 1`.
+    /// Equivalent to `width - 1`.
     pub fn diff_x(&self) -> T {
         self.x2.clone() - self.x1.clone()
     }
 
     /// Returns the difference of the y-coordinate of the rectangle, which is `y2 - y1`.
     ///
-    /// Same as `height - 1`.
+    /// Equivalent to `height - 1`.
     pub fn diff_y(&self) -> T {
         self.y2.clone() - self.y1.clone()
     }
@@ -260,7 +260,7 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
 
     /// Returns the product of the differences rectangle's x and y coordinates.
     ///
-    /// Same as `diff_x * diff_y` or `(width - 1) * (height - 1)`.
+    /// Equivalent to `diff_x * diff_y` or `(width - 1) * (height - 1)`.
     pub fn diff_prod(&self) -> T {
         self.diff_x() * self.diff_y()
     }
@@ -607,8 +607,12 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// The points are in a grid with the separation of 1 in both axises.
     pub fn points_border_iter(
         &self,
-    ) -> impl Clone + Iterator<Item = Point<T>> + FusedIterator + ExactSizeIterator + DoubleEndedIterator + use<T>
-    {
+    ) -> impl Clone
+    + Iterator<Item = Point<T>>
+    + FusedIterator
+    + ExactSizeIterator
+    + DoubleEndedIterator
+    + use<T> {
         let Rect { x1, y1, x2, y2 } = self.clone();
 
         // for the edge cases
@@ -655,8 +659,12 @@ impl<T: Clone + Num + PartialOrd> Rect<T> {
     /// Returns an iterator over the corners of this rectangle
     pub fn corners_iter(
         &self,
-    ) -> impl Clone + Iterator<Item = Point<T>> + FusedIterator + ExactSizeIterator + DoubleEndedIterator + use<T>
-    {
+    ) -> impl Clone
+    + Iterator<Item = Point<T>>
+    + FusedIterator
+    + ExactSizeIterator
+    + DoubleEndedIterator
+    + use<T> {
         std::iter::IntoIterator::into_iter([
             self.min_point(),
             self.x1y2(),
@@ -764,7 +772,7 @@ impl<T: PartialOrd> From<[[T; 2]; 2]> for Rect<T> {
 }
 
 impl<T: PartialOrd> From<[Point<T>; 2]> for Rect<T> {
-    /// Same as [`Rect::from_corners`].
+    /// Equivalent to [`Rect::from_corners`].
     fn from([min, max]: [Point<T>; 2]) -> Self {
         Self::from_corners(min, max)
     }

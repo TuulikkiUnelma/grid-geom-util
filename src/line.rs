@@ -1,6 +1,6 @@
 use crate::{Point, Rect};
 
-use num::{traits::AsPrimitive, Float, Integer, Num, One, Signed, Zero};
+use num::{Float, Integer, Num, One, Signed, Zero, traits::AsPrimitive};
 use serde::{Deserialize, Serialize};
 use std::{fmt, iter::FusedIterator};
 
@@ -312,7 +312,7 @@ impl<T: Clone> Line<T> {
 
     /// Returns the length of this line in the euclid space.
     ///
-    /// Same as `line.vector().distance_euclid()`.
+    /// Equivalent to `line.vector().distance_euclid()`.
     pub fn length_euclid(&self) -> T
     where
         T: Float,
@@ -322,7 +322,7 @@ impl<T: Clone> Line<T> {
 
     /// Returns the [taxicab/manhattan length](https://en.wikipedia.org/wiki/Taxicab_geometry) of this line.
     ///
-    /// Same as [`line.vector().distance_taxi()`](Point::distance_taxi).
+    /// Equivalent to [`line.vector().distance_taxi()`](Point::distance_taxi).
     pub fn length_taxi(&self) -> T
     where
         T: Num + PartialOrd,
@@ -332,7 +332,7 @@ impl<T: Clone> Line<T> {
 
     /// Returns the [Chebyshev/king's move length](https://en.wikipedia.org/wiki/Chebyshev_distance) of this line.
     ///
-    /// Same as [`line.vector().distance_king()`](Point::distance_king).
+    /// Equivalent to [`line.vector().distance_king()`](Point::distance_king).
     pub fn length_king(&self) -> T
     where
         T: Num + PartialOrd,
@@ -342,7 +342,7 @@ impl<T: Clone> Line<T> {
 
     /// Returns the bounding rectangle of this line.
     ///
-    /// Same as `(self.begin(), self.end()).into()`.
+    /// Equivalent to `(self.begin(), self.end()).into()`.
     pub fn rect(&self) -> Rect<T>
     where
         T: PartialOrd,
