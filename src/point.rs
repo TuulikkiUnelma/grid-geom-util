@@ -340,7 +340,7 @@ impl<T: Clone + Num> Point<T> {
     /// of this point.
     pub fn neighbors_neumann_iter(
         &self,
-    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator {
+    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator + use<T> {
         let one = T::one;
         let Point { x, y } = self;
         let x = || x.clone();
@@ -362,7 +362,7 @@ impl<T: Clone + Num> Point<T> {
     /// The 4 orthogonal (Von Neumann) neighbors are returned first.
     pub fn neighbors_moore_iter(
         &self,
-    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator {
+    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator + use<T> {
         let one = T::one;
         let Point { x, y } = self;
         let x = || x.clone();
@@ -385,7 +385,7 @@ impl<T: Clone + Num> Point<T> {
     /// Returns an iterator over the diagonal neighbors of this point.
     pub fn neighbors_diagonal_iter(
         &self,
-    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator {
+    ) -> impl Iterator<Item = Self> + FusedIterator + ExactSizeIterator + DoubleEndedIterator + use<T> {
         let one = T::one;
         let Point { x, y } = self;
         let x = || x.clone();
