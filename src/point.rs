@@ -1,4 +1,4 @@
-use crate::{CardDir, Rect, max, min};
+use crate::{CardinalDir, Rect, max, min};
 
 use num::Float;
 use num::{Integer, Num, Signed};
@@ -273,20 +273,20 @@ impl<T: Clone> Point<T> {
     /// The values of coordinates is assumed to grow south-east, ie. x grows towards east and y grows towards south.
     ///
     /// If the length is 0, returns [`CardDir::North`].
-    pub fn cardinal(&self) -> CardDir
+    pub fn cardinal(&self) -> CardinalDir
     where
         T: Signed + PartialOrd,
     {
         if self.x.abs() > self.y.abs() {
             if self.x.is_positive() {
-                CardDir::East
+                CardinalDir::East
             } else {
-                CardDir::West
+                CardinalDir::West
             }
         } else if self.y.is_positive() {
-            CardDir::South
+            CardinalDir::South
         } else {
-            CardDir::North
+            CardinalDir::North
         }
     }
 

@@ -14,27 +14,19 @@ use std::fmt;
 
 /// A generic max function.
 fn max<T: PartialOrd>(a: T, b: T) -> T {
-    if a >= b {
-        a
-    } else {
-        b
-    }
+    if a >= b { a } else { b }
 }
 
 /// A generic min function.
 fn min<T: PartialOrd>(a: T, b: T) -> T {
-    if a <= b {
-        a
-    } else {
-        b
-    }
+    if a <= b { a } else { b }
 }
 
 /// A cardinal direction towards one of the axises.
 ///
 /// Returned by [`Point::cardinal`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum CardDir {
+pub enum CardinalDir {
     /// Towards positive X
     East,
     /// Towards positive Y
@@ -45,9 +37,9 @@ pub enum CardDir {
     North,
 }
 
-impl fmt::Display for CardDir {
+impl fmt::Display for CardinalDir {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use CardDir::*;
+        use CardinalDir::*;
         f.write_str(match self {
             East => "east",
             South => "south",
@@ -97,10 +89,10 @@ mod tests {
 
     #[test]
     fn point_cardinal_dir() {
-        assert_eq!(Point::new(5, 1).cardinal(), CardDir::East);
-        assert_eq!(Point::new(-5, 1).cardinal(), CardDir::West);
-        assert_eq!(Point::new(1, -5).cardinal(), CardDir::North);
-        assert_eq!(Point::new(1, 5).cardinal(), CardDir::South);
+        assert_eq!(Point::new(5, 1).cardinal(), CardinalDir::East);
+        assert_eq!(Point::new(-5, 1).cardinal(), CardinalDir::West);
+        assert_eq!(Point::new(1, -5).cardinal(), CardinalDir::North);
+        assert_eq!(Point::new(1, 5).cardinal(), CardinalDir::South);
     }
 
     #[test]
