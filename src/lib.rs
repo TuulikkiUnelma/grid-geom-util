@@ -37,6 +37,21 @@ pub enum CardinalDir {
     North,
 }
 
+impl CardinalDir {
+    /// Returns the direction as a point with the distance of 1 from the origin.
+    pub fn into_point<T: num::Signed>(self) -> Point<T> {
+        use CardinalDir::*;
+        let z = || T::zero(); // 0
+        let o = || T::one(); // 1
+        match self {
+            East => Point { x: o(), y: z() },
+            South => Point { x: z(), y: o() },
+            West => Point { x: -o(), y: z() },
+            North => Point { x: z(), y: -o() },
+        }
+    }
+}
+
 impl fmt::Display for CardinalDir {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use CardinalDir::*;
